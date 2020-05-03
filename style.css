@@ -50,6 +50,10 @@ input {
     justify-content: center;
 }
 
+.text-center {
+    text-align: center;
+}
+
 .menu-layer {
     background-color: rgba(0, 0, 0, 0.6);
 }

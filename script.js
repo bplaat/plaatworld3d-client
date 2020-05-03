@@ -350,7 +350,6 @@
         }
 
         if (type == 'player.chat') {
-            console.log(data);
             if (data.id == 0) {
                 addChat('<u>Server</u>', data.message);
             }
@@ -506,6 +505,23 @@
         crate.position.y = CRATE_SIZE / 2 + rand(0, 20) * CRATE_SIZE;
         crates.add(crate);
     }
+
+    // PlaatWorld 3D logo
+    const loader = new THREE.FontLoader();
+    let logo;
+    loader.load('/font.json', function (font) {
+        const logoGeometry = new THREE.TextGeometry('PlaatWorld 3D', {
+            font: font,
+            size: 0.75,
+            height: 0.2
+        });
+        logoGeometry.center();
+
+        const logoMaterial = new THREE.MeshNormalMaterial();
+        logo = new THREE.Mesh(logoGeometry, logoMaterial);
+        logo.position.y = 1.5;
+        scene.add(logo);
+    });
 
     // Update
     let previousTime = performance.now();
@@ -666,6 +682,11 @@
                 rotationY: camera.rotation.y,
                 rotationZ: camera.rotation.z
             });
+        }
+
+        // Update logo
+        if (logo != undefined) {
+            logo.rotation.y += 0.75 * delta;
         }
 
         previousTime = time;
