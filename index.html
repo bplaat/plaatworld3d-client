@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PlaatWorld 3D</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="/three.min.js"></script>
+    <script src="/tween.min.js"></script>
+</head>
+<body>
+    <div id="menu-layer" class="layer menu-layer">
+        <h1>PlaatWorld 3D</h1>
+        <p>Name: <input type="text" id="name-input" value="Anonymous" maxlength="12"></p>
+        <p><button id="play-button">Play</button></p>
+    </div>
+
+    <div id="controls-layer" class="layer hidden">
+        <div id="player-list" class="player-list"></div>
+
+        <div class="health-bar">
+            <div id="health-bar" class="health-bar-part" style="width: 100%;"></div>
+        </div>
+
+        <svg width="24" height="24">
+            <rect fill="rgba(255, 255, 255, 0.8)" x="0" y="10" width="24" height="4" />
+            <rect fill="rgba(255, 255, 255, 0.8)" x="10" y="0" width="4" height="24" />
+        </svg>
+
+        <div id="chat-list" class="chat-list"></div>
+        <div id="chat-input" class="chat-input"></div>
+    </div>
+
+    <script src="/script.js"></script>
+</body>
+</html>
