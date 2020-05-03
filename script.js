@@ -146,7 +146,7 @@
     scene.add(playersGroup);
     const players = [];
 
-    const ws = new WebSocket('ws://localhost:8081');
+    const ws = new WebSocket('wss://plaatworld3d.herokuapp.com/');
 
     function sendMessage (type, data) {
         if (DEBUG) console.log('SENT: ', JSON.stringify({ type: type, data: data }));
