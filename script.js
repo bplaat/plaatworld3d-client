@@ -106,6 +106,8 @@
     const explosionSound = new Sound('/sounds/explosion.wav');
     const hitSound = new Sound('/sounds/hit.wav');
     const jumpSound = new Sound('/sounds/jump.wav');
+    const coinSound = new Sound('/sounds/coin.wav');
+    const healSound = new Sound('/sounds/heal.wav');
 
     // Scene
     const scene = new THREE.Scene();
@@ -484,6 +486,7 @@
                 }
 
                 if (event.keyCode == 84 || event.keyCode == 13) {
+                    event.preventDefault();
                     chatMode = true;
                     chatInputElement.focus();
                 }
@@ -806,6 +809,8 @@
             const bank = banks.children[i];
             if (new THREE.Box3().setFromObject(bank).containsPoint(new THREE.Vector3(camera.position.x, bank.position.y, camera.position.z))) {
                 if (rand(1, 25) == 1) {
+                    coinSound.play();
+
                     const amount = rand(1, 2);
 
                     updatePlayer(player.id, {
@@ -824,8 +829,10 @@
         for (let i = 0; i < hospitals.children.length; i++) {
             const hospital = hospitals.children[i];
             if (new THREE.Box3().setFromObject(hospital).containsPoint(new THREE.Vector3(camera.position.x, hospital.position.y, camera.position.z))) {
-                if (rand(1, 10) == 1 && player.money >= 2) {
+                if (rand(1, 15) == 1 && player.money >= 2) {
                     if (player.health + 1 <= PLAYER_MAX_HEALTH) {
+                        healSound.play();
+
                         updatePlayer(player.id, {
                             money: player.money - 2,
                             health: player.health + 1
