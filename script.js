@@ -1,6 +1,6 @@
 (function () {
     // Constants
-    const DEBUG = false;
+    const DEBUG = window.location.hostname != 'plaatworld3d.ml';
 
     const MAX_CHAT = 10;
 
@@ -146,7 +146,12 @@
     scene.add(playersGroup);
     const players = [];
 
-    const ws = new WebSocket('wss://plaatworld3d.herokuapp.com/');
+    let ws;
+    if (window.location.hostname == 'plaatworld3d.ml') {
+        ws = new WebSocket('wss://plaatworld3d.herokuapp.com/');
+    } else {
+        ws = new WebSocket('ws://localhost:8081/');
+    }
 
     function sendMessage (type, data) {
         if (DEBUG) console.log('SENT: ', JSON.stringify({ type: type, data: data }));
@@ -485,7 +490,7 @@
     const groundMaterial = new THREE.MeshBasicMaterial({ map: groundTexture });
     const ground = new THREE.Mesh(groundGeometry, groundMaterial);
     ground.rotation.x = -Math.PI / 2;
-    ground.material.map.repeat.set(MAP_SIZE / 10, MAP_SIZE / 10);
+    ground.material.map.repeat.set(MAP_SIZE / 5, MAP_SIZE / 5);
     ground.material.map.wrapS = THREE.RepeatWrapping;
     ground.material.map.wrapT = THREE.RepeatWrapping;
     scene.add(ground);
