@@ -12,15 +12,17 @@
 
     const BANK_SIZE = 5;
 
+    const HOSPITAL_SIZE = 5;
+
     const PLAYER_HEIGHT = 2;
-    const PLAYER_WEIGHT = 40;
+    const PLAYER_WEIGHT = 50;
     const PLAYER_MAX_HEALTH = 100;
     const PLAYER_SENSITIVITY = 0.004;
     const PLAYER_SPEED = 150;
-    const PLAYER_JUMP_HEIGHT = 150;
+    const PLAYER_JUMP_HEIGHT = 200;
 
     const BULLET_SPEED = 40;
-    const BULLET_PRICE = 10;
+    const BULLET_PRICE = 5;
     const BULLET_TIMEOUT = 2500;
 
     // Rand
@@ -518,12 +520,12 @@
                 lastShot = Date.now();
                 shoot = true;
 
-                sendMessage('player.money', {
+                updatePlayer(player.id, {
                     money: player.money - BULLET_PRICE
                 });
 
-                updatePlayer(player.id, {
-                    money: player.money - BULLET_PRICE
+                sendMessage('player.money', {
+                    money: player.money
                 });
             }
         }
@@ -546,11 +548,11 @@
     const groundGeometry = new THREE.PlaneBufferGeometry(MAP_SIZE, MAP_SIZE);
     const groundTexture = new THREE.TextureLoader().load('/images/grass.jpg');
     const groundMaterial = new THREE.MeshBasicMaterial({ map: groundTexture });
+    groundMaterial.map.repeat.set(MAP_SIZE / 5, MAP_SIZE / 5);
+    groundMaterial.map.wrapS = THREE.RepeatWrapping;
+    groundMaterial.map.wrapT = THREE.RepeatWrapping;
     const ground = new THREE.Mesh(groundGeometry, groundMaterial);
     ground.rotation.x = -Math.PI / 2;
-    ground.material.map.repeat.set(MAP_SIZE / 5, MAP_SIZE / 5);
-    ground.material.map.wrapS = THREE.RepeatWrapping;
-    ground.material.map.wrapT = THREE.RepeatWrapping;
     scene.add(ground);
 
     // Crates
@@ -584,6 +586,26 @@
         bank.position.z = rand((-MAP_SIZE / 2) / BANK_SIZE, (MAP_SIZE / 2) / BANK_SIZE) * BANK_SIZE;
         bank.position.y = 0.05;
         banks.add(bank);
+    }
+
+    // Hospitals
+    const hospitalGeometry = new THREE.CircleGeometry(HOSPITAL_SIZE, 32);
+    const hospitalTexture = new THREE.TextureLoader().load('/images/hospital.jpg');
+    const hospitalMaterial = new THREE.MeshBasicMaterial({ map: hospitalTexture });
+    hospitalMaterial.map.repeat.set(3, 3);
+    hospitalMaterial.map.wrapS = THREE.RepeatWrapping;
+    hospitalMaterial.map.wrapT = THREE.RepeatWrapping;
+
+    const hospitals = new THREE.Group();
+    scene.add(hospitals);
+
+    for (let i = 0; i < MAP_SIZE * MAP_SIZE / 10000; i++) {
+        const hospital = new THREE.Mesh(hospitalGeometry,  hospitalMaterial);
+        hospital.rotation.x = -Math.PI / 2;
+        hospital.position.x = rand((-MAP_SIZE / 2) / HOSPITAL_SIZE, (MAP_SIZE / 2) / HOSPITAL_SIZE) * HOSPITAL_SIZE;
+        hospital.position.z = rand((-MAP_SIZE / 2) / HOSPITAL_SIZE, (MAP_SIZE / 2) / HOSPITAL_SIZE) * HOSPITAL_SIZE;
+        hospital.position.y = 0.1;
+        hospitals.add(hospital);
     }
 
     // PlaatWorld 3D logo
@@ -719,7 +741,7 @@
                                 hitSound.play();
 
                                 updatePlayer(player.id, {
-                                    health: player.health - rand(5, 25)
+                                    health: player.health - rand(5, 20)
                                 });
 
                                 sendMessage('player.health', {
@@ -790,8 +812,32 @@
                     });
 
                     sendMessage('player.money', {
-                        money: player.money + amount
+                        money: player.money
                     });
+                }
+                break;
+            }
+        }
+
+        // Checks hospitals
+        for (let i = 0; i < hospitals.children.length; i++) {
+            const hospital = hospitals.children[i];
+            if (new THREE.Box3().setFromObject(hospital).containsPoint(new THREE.Vector3(camera.position.x, hospital.position.y, camera.position.z))) {
+                if (rand(1, 10) == 1 && player.money >= 2) {
+                    if (player.health + 1 <= PLAYER_MAX_HEALTH) {
+                        updatePlayer(player.id, {
+                            money: player.money - 2,
+                            health: player.health + 1
+                        });
+
+                        sendMessage('player.health', {
+                            health: player.health
+                        });
+
+                        sendMessage('player.money', {
+                            money: player.money
+                        });
+                    }
                 }
                 break;
             }
