@@ -107,7 +107,7 @@ a {
 .chat-list {
     position: absolute;
     left: 16px;
-    bottom: 56px;
+    bottom: 80px;
     width: 600px;
     overflow: hidden;
 }
@@ -117,10 +117,10 @@ a {
     left: 16px;
     bottom: 16px;
     width: 500px;
-    height: 32px;
-    overflow: hidden;
+    padding: 8px 12px;
+    opacity: 0.2;
 }
 
-.chat-input.active {
-    background-color: rgba(0, 0, 0, 0.6);
+.chat-input:focus {
+    opacity: 1;
 }

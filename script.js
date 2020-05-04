@@ -437,7 +437,6 @@
 
     // Input
     let chatMode = false;
-    let chatMessage = '';
     const velocity = new THREE.Vector3();
     let moveForward = false;
     let moveLeft = false;
@@ -449,29 +448,22 @@
 
     window.addEventListener('keydown', function (event) {
         if (lock) {
-            event.preventDefault();
-
             if (chatMode) {
-                if (event.keyCode == 8) {
-                    chatMessage = chatMessage.substring(0, chatMessage.length - 1);
-                } else if (event.keyCode == 13) {
+                if (event.keyCode == 13) {
                     chatMode = false;
-                    chatInputElement.classList.remove('active');
 
-                    if (chatMessage != '') {
+                    chatInputElement.blur();
+
+                    if (chatInputElement.value != '') {
                         sendMessage('player.chat', {
-                            message: chatMessage
+                            message: chatInputElement.value
                         });
 
-                        addChat(player.name, chatMessage);
+                        addChat(player.name, chatInputElement.value);
 
-                        chatMessage = '';
+                        chatInputElement.value = '';
                     }
-                } else if (chatMessage.length < 24) {
-                    chatMessage += event.key;
                 }
-
-                chatInputElement.textContent = chatMessage;
             } else {
                 if (event.keyCode == 87 || event.keyCode == 38) {
                     moveForward = true;
@@ -493,7 +485,7 @@
 
                 if (event.keyCode == 84 || event.keyCode == 13) {
                     chatMode = true;
-                    chatInputElement.classList.add('active');
+                    chatInputElement.focus();
                 }
             }
         }
@@ -506,8 +498,6 @@
 
     window.addEventListener('keyup', function (event) {
         if (lock) {
-            event.preventDefault();
-
             if (event.keyCode == 87 || event.keyCode == 38) {
                 moveForward = false;
             }
@@ -525,8 +515,6 @@
 
     window.addEventListener('mousedown', function (event) {
         if (lock) {
-            event.preventDefault();
-
             if (Date.now() - lastShot > 500 && player.money >= BULLET_PRICE) {
                 lastShot = Date.now();
                 shoot = true;
@@ -544,8 +532,6 @@
 
     window.addEventListener('mousemove', function (event) {
         if (lock) {
-            event.preventDefault();
-
             const euler = new THREE.Euler(0, 0, 0, 'YXZ');
             euler.setFromQuaternion(camera.quaternion);
             euler.y -= event.movementX * PLAYER_SENSITIVITY;
@@ -553,6 +539,10 @@
             euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, euler.x));
             camera.quaternion.setFromEuler(euler);
         }
+    });
+
+    window.addEventListener('contextmenu', function (event) {
+        event.preventDefault();
     });
 
     // Ground
@@ -610,7 +600,7 @@
     const hospitals = new THREE.Group();
     scene.add(hospitals);
 
-    for (let i = 0; i < MAP_SIZE * MAP_SIZE / 10000; i++) {
+    for (let i = 0; i < MAP_SIZE * MAP_SIZE / 20000; i++) {
         const hospital = new THREE.Mesh(hospitalGeometry,  hospitalMaterial);
         hospital.rotation.x = -Math.PI / 2;
         hospital.position.x = rand((-MAP_SIZE / 2) / HOSPITAL_SIZE, (MAP_SIZE / 2) / HOSPITAL_SIZE) * HOSPITAL_SIZE;
