@@ -1,6 +1,6 @@
 (function () {
     // Constants
-    const DEBUG = false; // window.location.hostname != 'plaatworld3d.ml';
+    const DEBUG = window.location.hostname != 'plaatworld3d.ml';
 
     const CHAT_SERVER_PLAYER_ID = 0;
     const CHAT_MAX = 10;
@@ -14,6 +14,8 @@
 
     const HOSPITAL_SIZE = 5;
 
+    const DOOR_SIZE = 4;
+
     const PLAYER_HEIGHT = 2;
     const PLAYER_WEIGHT = 25;
     const PLAYER_MAX_HEALTH = 100;
@@ -24,6 +26,9 @@
     const BULLET_SPEED = 40;
     const BULLET_PRICE = 5;
     const BULLET_TIMEOUT = 2500;
+
+    const SHOP_DISTANCE = MAP_SIZE * 3;
+    const SHOP_SIZE = MAP_SIZE;
 
     // Rand
     let seed = 1;
@@ -108,6 +113,7 @@
     const jumpSound = new Sound('/sounds/jump.wav');
     const coinSound = new Sound('/sounds/coin.wav');
     const healSound = new Sound('/sounds/heal.wav');
+    const doorSound = new Sound('/sounds/door.wav');
 
     // Scene
     const scene = new THREE.Scene();
@@ -549,7 +555,7 @@
     });
 
     // Ground
-    const groundGeometry = new THREE.PlaneBufferGeometry(MAP_SIZE, MAP_SIZE);
+    const groundGeometry = new THREE.PlaneGeometry(MAP_SIZE, MAP_SIZE);
     const groundTexture = new THREE.TextureLoader().load('/images/grass.jpg');
     const groundMaterial = new THREE.MeshBasicMaterial({ map: groundTexture });
     groundMaterial.map.repeat.set(MAP_SIZE / 5, MAP_SIZE / 5);
@@ -612,21 +618,83 @@
         hospitals.add(hospital);
     }
 
-    // PlaatWorld 3D logo
-    const loader = new THREE.FontLoader();
-    let logo;
-    loader.load('/font.json', function (font) {
-        const logoGeometry = new THREE.TextGeometry('PlaatWorld 3D', {
+    // Door
+    const doorGeometry = new THREE.CubeGeometry(DOOR_SIZE, DOOR_SIZE, DOOR_SIZE / 20);
+    const doorTexture = new THREE.TextureLoader().load('/images/door.jpg');
+    const doorMaterial = new THREE.MeshBasicMaterial({ map: doorTexture });
+
+    const doors = new THREE.Group();
+    scene.add(doors);
+
+    // Map shop door
+    const shopDoor = new THREE.Mesh(doorGeometry, doorMaterial);
+    shopDoor.destination = new THREE.Vector3(0, 0, SHOP_DISTANCE);
+    shopDoor.position.y = DOOR_SIZE / 2;
+    shopDoor.position.z = -25;
+    doors.add(shopDoor);
+
+    // Shop floor
+    const shopFloorGeometry = new THREE.PlaneGeometry(SHOP_SIZE, SHOP_SIZE);
+    const shopFloorTexture = new THREE.TextureLoader().load('/images/floor.jpg');
+    const shopFloorMaterial = new THREE.MeshBasicMaterial({ map: shopFloorTexture });
+    shopFloorMaterial.map.repeat.set(SHOP_SIZE / 5, SHOP_SIZE / 5);
+    shopFloorMaterial.map.wrapS = THREE.RepeatWrapping;
+    shopFloorMaterial.map.wrapT = THREE.RepeatWrapping;
+    const shopFloor = new THREE.Mesh(shopFloorGeometry, shopFloorMaterial);
+    shopFloor.position.z = SHOP_DISTANCE;
+    shopFloor.rotation.x = -Math.PI / 2;
+    scene.add(shopFloor);
+
+    // Shop back door
+    const backDoor = new THREE.Mesh(doorGeometry, doorMaterial);
+    backDoor.destination = new THREE.Vector3(0, 0, -20);
+    backDoor.position.y = DOOR_SIZE / 2;
+    backDoor.position.z = SHOP_DISTANCE - 10;
+    doors.add(backDoor);
+
+    // Texts
+    const textMaterial = new THREE.MeshNormalMaterial();
+    const texts = new THREE.Group();
+    scene.add(texts);
+
+    new THREE.FontLoader().load('/font.json', function (font) {
+        // PlaatWorld 3D logo
+        const logoTextGeometry = new THREE.TextGeometry('PlaatWorld 3D', {
             font: font,
             size: 0.75,
             height: 0.2
         });
-        logoGeometry.center();
+        logoTextGeometry.center();
+        const logoText = new THREE.Mesh(logoTextGeometry, textMaterial);
+        logoText.position.y = 1.5;
+        logoText.rotation.y = random() *  Math.PI;
+        texts.add(logoText);
 
-        const logoMaterial = new THREE.MeshNormalMaterial();
-        logo = new THREE.Mesh(logoGeometry, logoMaterial);
-        logo.position.y = 1.5;
-        scene.add(logo);
+        // Map shop door text
+        const shopTextGeometry = new THREE.TextGeometry('Shop', {
+            font: font,
+            size: 0.75,
+            height: 0.2
+        });
+        shopTextGeometry.center();
+        const shopText = new THREE.Mesh(shopTextGeometry, textMaterial);
+        shopText.position.y = DOOR_SIZE + 1;
+        shopText.position.z = -25;
+        shopText.rotation.y = random() *  Math.PI;
+        texts.add(shopText);
+
+        // Shop back door text
+        const backTextGeometry = new THREE.TextGeometry('Back', {
+            font: font,
+            size: 0.75,
+            height: 0.2
+        });
+        backTextGeometry.center();
+        const backText = new THREE.Mesh(backTextGeometry, textMaterial);
+        backText.position.y = DOOR_SIZE + 1;
+        backText.position.z = SHOP_DISTANCE - 10;
+        backText.rotation.y = random() *  Math.PI;
+        texts.add(backText);
     });
 
     // Update
@@ -851,9 +919,42 @@
             }
         }
 
-        // Update logo
-        if (logo != undefined) {
-            logo.rotation.y += 0.75 * delta;
+        // Checks doors
+        if (player != undefined) {
+            for (let i = 0; i < doors.children.length; i++) {
+                const door = doors.children[i];
+                if (new THREE.Box3().setFromObject(player.group).intersectsBox(new THREE.Box3().setFromObject(door))) {
+                    if (DEBUG) console.log('door hit');
+
+                    doorSound.play();
+
+                    camera.position.copy(door.destination);
+
+                    updatePlayer(player.id, {
+                        x: door.destination.x,
+                        y: door.destination.y,
+                        z: door.destination.z
+                    });
+
+                    sendMessage('player.move', {
+                        x: door.destination.x,
+                        y: door.destination.y,
+                        z: door.destination.z,
+                        rotation: {
+                            x: camera.rotation.x,
+                            y: camera.rotation.y,
+                            z: camera.rotation.z
+                        }
+                    });
+
+                    break;
+                }
+            }
+        }
+
+        // Rotate the text
+        for (const text of texts.children) {
+            text.rotation.y += 0.75 * delta;
         }
 
         previousTime = time;
