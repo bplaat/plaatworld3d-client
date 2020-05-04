@@ -518,11 +518,11 @@
                 lastShot = Date.now();
                 shoot = true;
 
-                updatePlayer(player.id, {
+                sendMessage('player.money', {
                     money: player.money - BULLET_PRICE
                 });
 
-                sendMessage('player.money', {
+                updatePlayer(player.id, {
                     money: player.money - BULLET_PRICE
                 });
             }
@@ -783,12 +783,14 @@
             const bank = banks.children[i];
             if (new THREE.Box3().setFromObject(bank).containsPoint(new THREE.Vector3(camera.position.x, bank.position.y, camera.position.z))) {
                 if (rand(1, 25) == 1) {
+                    const amount = rand(1, 2);
+
                     updatePlayer(player.id, {
-                        money: player.money + 1
+                        money: player.money + amount
                     });
 
                     sendMessage('player.money', {
-                        money: player.money + 1
+                        money: player.money + amount
                     });
                 }
                 break;
