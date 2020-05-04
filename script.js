@@ -1,6 +1,6 @@
 (function () {
     // Constants
-    const DEBUG = window.location.hostname != 'plaatworld3d.ml';
+    const DEBUG = false; // window.location.hostname != 'plaatworld3d.ml';
 
     const CHAT_SERVER_PLAYER_ID = 0;
     const CHAT_MAX = 10;
@@ -20,6 +20,7 @@
     const PLAYER_JUMP_HEIGHT = 150;
 
     const BULLET_SPEED = 40;
+    const BULLET_PRICE = 10;
     const BULLET_TIMEOUT = 2500;
 
     // Rand
@@ -226,8 +227,13 @@
     }
 
     function updatePlayerList () {
+        const sortedPlayers = players.slice();
+        sortedPlayers.sort(function (a, b) {
+            return b.money - a.money;
+        });
+
         playerListElement.innerHTML = '';
-        for (const otherPlayer of players) {
+        for (const otherPlayer of sortedPlayers) {
             if (DEBUG) {
                 playerListElement.innerHTML += '<div>#' + otherPlayer.id + ' - ' + otherPlayer.name + ': ' + otherPlayer.health + ' - $' + otherPlayer.money + ' - ' + otherPlayer.x.toFixed(2) + ' ' + otherPlayer.y.toFixed(2) + ' ' + otherPlayer.z.toFixed(2) + '</div>';
             } else {
@@ -508,9 +514,17 @@
         if (lock) {
             event.preventDefault();
 
-            if (Date.now() - lastShot > 500) {
+            if (Date.now() - lastShot > 500 && player.money >= BULLET_PRICE) {
                 lastShot = Date.now();
                 shoot = true;
+
+                updatePlayer(player.id, {
+                    money: player.money - BULLET_PRICE
+                });
+
+                sendMessage('player.money', {
+                    money: player.money - BULLET_PRICE
+                });
             }
         }
     });
@@ -770,6 +784,10 @@
             if (new THREE.Box3().setFromObject(bank).containsPoint(new THREE.Vector3(camera.position.x, bank.position.y, camera.position.z))) {
                 if (rand(1, 25) == 1) {
                     updatePlayer(player.id, {
+                        money: player.money + 1
+                    });
+
+                    sendMessage('player.money', {
                         money: player.money + 1
                     });
                 }

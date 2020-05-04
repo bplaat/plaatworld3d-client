@@ -8,6 +8,7 @@ body {
     margin: 0;
     cursor: default;
     user-select: none;
+    background-color: #80c0e0;
     color: #fff;
     overflow: hidden;
 }
