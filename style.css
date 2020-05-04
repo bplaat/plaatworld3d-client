@@ -26,7 +26,7 @@ canvas {
 
 button, input {
     padding: 16px 24px;
-    border: 4px solid #222;
+    border: 4px solid #666;
     background-color: #fff;
 }
 
@@ -36,6 +36,10 @@ button {
 
 input {
     width: 300px;
+}
+
+a {
+    color: inherit;
 }
 
 .layer {
@@ -55,7 +59,14 @@ input {
 }
 
 .menu-layer {
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(0, 0, 0, 0.65);
+}
+
+.footer {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    bottom: 16px;
 }
 
 .player-list {
@@ -68,10 +79,13 @@ input {
     visibility: hidden;
 }
 
-.health-bar {
+.version, .health-bar {
     position: absolute;
     top: 16px;
     right: 16px;
+}
+
+.health-bar {
     width: 200px;
     height: 20px;
     background-color: #f00;

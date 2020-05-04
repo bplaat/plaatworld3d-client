@@ -1,4 +1,4 @@
-(function () {
+// (function () {
     // Constants
     const DEBUG = window.location.hostname != 'plaatworld3d.ml';
 
@@ -316,8 +316,9 @@
                         z: data.z
                     });
 
-                    players[i].head.rotation.x = data.rotationX;
-                    players[i].head.rotation.z = data.rotationZ;
+                    players[i].head.rotation.x = data.rotation.x;
+                    players[i].head.rotation.y = data.rotation.y;
+                    players[i].head.rotation.z = data.rotation.z;
 
                     break;
                 }
@@ -333,9 +334,9 @@
             bullet.position.x = data.x;
             bullet.position.y = data.y;
             bullet.position.z = data.z;
-            bullet.rotation.x = data.rotationX;
-            bullet.rotation.y = data.rotationY;
-            bullet.rotation.z = data.rotationZ;
+            bullet.rotation.x = data.rotation.x;
+            bullet.rotation.y = data.rotation.y;
+            bullet.rotation.z = data.rotation.z;
             bullets.add(bullet);
         }
 
@@ -395,6 +396,8 @@
     let lastShot = Date.now();
 
     window.addEventListener('keydown', function (event) {
+        event.preventDefault();
+
         if (chatMode) {
             if (event.keyCode == 8) {
                 chatMessage = chatMessage.substring(0, chatMessage.length - 1);
@@ -450,6 +453,8 @@
     });
 
     window.addEventListener('keyup', function (event) {
+        event.preventDefault();
+
         if (lock) {
             if (event.keyCode == 87 || event.keyCode == 38) {
                 moveForward = false;
@@ -467,6 +472,8 @@
     });
 
     window.addEventListener('mousedown', function (event) {
+        event.preventDefault();
+
         if (lock && Date.now() - lastShot > 500) {
             lastShot = Date.now();
             shoot = true;
@@ -474,6 +481,8 @@
     });
 
     window.addEventListener('mousemove', function (event) {
+        event.preventDefault();
+
         if (lock) {
             const euler = new THREE.Euler(0, 0, 0, 'YXZ');
             euler.setFromQuaternion(camera.quaternion);
@@ -590,8 +599,11 @@
                 x: camera.position.x,
                 y: camera.position.y,
                 z: camera.position.z,
-                rotationX: camera.rotation.x,
-                rotationZ: camera.rotation.z
+                rotation: {
+                    x: camera.rotation.x,
+                    y: camera.rotation.y,
+                    z: camera.rotation.z
+                }
             });
         }
 
@@ -683,9 +695,11 @@
                 x: camera.position.x,
                 y: camera.position.y,
                 z: camera.position.z,
-                rotationX: camera.rotation.x,
-                rotationY: camera.rotation.y,
-                rotationZ: camera.rotation.z
+                rotation: {
+                    x: camera.rotation.x,
+                    y: camera.rotation.y,
+                    z: camera.rotation.z
+                }
             });
         }
 
@@ -706,4 +720,4 @@
     }
 
     loop();
-})();
+// })();
