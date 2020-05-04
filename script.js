@@ -1,7 +1,6 @@
 (function () {
     // Constants
     const VERSION = '0.4.0';
-
     const DEBUG = window.location.hostname != 'plaatworld3d.ml';
 
     const CHAT_SERVER_PLAYER_ID = 0;
@@ -22,17 +21,28 @@
 
     const PLAYER_HEIGHT = 2;
     const PLAYER_WEIGHT = 25;
-    const PLAYER_MAX_HEALTH = 100;
     const PLAYER_SENSITIVITY = 0.004;
-    const PLAYER_SPEED = 150;
-    const PLAYER_JUMP_HEIGHT = 100;
+    let playerSpeed = 75;
+    let playerJumpHeight = 50;
 
-    const BULLET_SPEED = 40;
+    const BULLET_SPEED = 65;
     const BULLET_TIMEOUT = 2500;
 
     const SHOP_DISTANCE = MAP_SIZE * 3;
     const SHOP_SIZE = 32;
     const SHOP_ITEM_SIZE = 6;
+
+    const STRENGHT_COST = 10;
+    const STRENGHT_STEP = 2;
+
+    const ATTACK_COST = 25;
+    const ATTACK_STEP = 2;
+
+    const JUMP_COST = 25;
+    const JUMP_STEP = 10;
+
+    const SPEED_COST = 20;
+    const SPEED_STEP = 5;
 
     // Rand
     let seed = 1;
@@ -56,7 +66,7 @@
 
     const controlsLayerElement = document.getElementById('controls-layer');
     const playerListElement = document.getElementById('player-list');
-    const moneyLabelElement = document.getElementById('money-label');
+    const statsLabelElement = document.getElementById('stats-label');
     const healthBarElement = document.getElementById('health-bar');
     const chatListElement = document.getElementById('chat-list');
     const chatInputElement = document.getElementById('chat-input');
@@ -104,7 +114,7 @@
             this.channels = [];
             this.number = 10;
             this.index = 0;
-            for (var i = 0; i < this.number; i++) {
+            for (let i = 0; i < this.number; i++) {
                 this.channels.push(new Audio(audio_url));
             }
         }
@@ -216,22 +226,20 @@
                     }
                 }
 
-                if (props.health != undefined) {
-                    players[i].health = props.health;
+                if (props.health != undefined) players[i].health = props.health;
+                if (props.strength != undefined) players[i].strength = props.strength;
+
+                if (props.health != undefined || props.strength != undefined) {
                     if (player_id == player.id) {
-                        healthBarElement.style.width = props.health / PLAYER_MAX_HEALTH * 100 + '%';
+                        healthBarElement.style.width = players[i].health / players[i].strength * 100 + '%';
                     } else {
                         renderNamePlate(players[i].namePlateCanvas, players[i]);
                         players[i].namePlateTexture.needsUpdate = true;
                     }
                 }
 
-                if (props.money != undefined) {
-                    players[i].money = props.money;
-                    if (player_id == player.id) {
-                        moneyLabelElement.textContent = '$' + props.money;
-                    }
-                }
+                if (props.attack != undefined) players[i].attack = props.attack;
+                if (props.money != undefined) players[i].money = props.money;
 
                 if (props.x != undefined) players[i].x = props.x;
                 if (props.y != undefined) players[i].y = props.y;
@@ -248,7 +256,14 @@
             }
         }
 
+        if (player_id == player.id) {
+            updateStatsLabel();
+        }
         updatePlayerList();
+    }
+
+    function updateStatsLabel () {
+        statsLabelElement.textContent = 'Money: $' + player.money + ' - Attack: ' + player.attack + ' - Health: ' + player.health + '/' + player.strength;
     }
 
     function updatePlayerList () {
@@ -261,7 +276,7 @@
         for (const otherPlayer of sortedPlayers) {
             if (DEBUG) {
                 const playerItem = document.createElement('div');
-                playerItem.textContent = '#' + otherPlayer.id + ' - ' + otherPlayer.name + ': ' + otherPlayer.health + ' - $' + otherPlayer.money + ' - ' + otherPlayer.x.toFixed(2) + ' ' + otherPlayer.y.toFixed(2) + ' ' + otherPlayer.z.toFixed(2);
+                playerItem.textContent = '#' + otherPlayer.id + ' - ' + otherPlayer.name + ': Money: $' + otherPlayer.money + ' - Attack: ' + otherPlayer.attack + ' - Health: ' + otherPlayer.health + '/' + otherPlayer.strength + ' - Position: ' + otherPlayer.x.toFixed(2) + ' ' + otherPlayer.y.toFixed(2) + ' ' + otherPlayer.z.toFixed(2);
                 playerListElement.appendChild(playerItem);
             } else {
                 const playerItem = document.createElement('div');
@@ -278,7 +293,7 @@
         context.fillRect(0, 0, canvas.width, canvas.height);
 
         context.fillStyle = '#0c0';
-        context.fillRect(0, 0, Math.round(player.health / PLAYER_MAX_HEALTH * canvas.width), canvas.height);
+        context.fillRect(0, 0, Math.round(player.health / player.strength * canvas.width), canvas.height);
 
         context.fillStyle = '#fff';
         context.font = 'bold ' +  canvas.width / 100 * 15 + 'px monospace';
@@ -339,8 +354,7 @@
             camera.position.y = data.y;
             camera.position.z = data.z;
 
-            moneyLabelElement.textContent = '$' + data.money;
-
+            updateStatsLabel();
             updatePlayerList();
         }
 
@@ -363,6 +377,18 @@
         if (type == 'player.health') {
             updatePlayer(data.id, {
                 health: data.health
+            });
+        }
+
+        if (type == 'player.strength') {
+            updatePlayer(data.id, {
+                strength: data.strength
+            });
+        }
+
+        if (type == 'player.attack') {
+            updatePlayer(data.id, {
+                attack: data.attack
             });
         }
 
@@ -499,7 +525,7 @@
                 }
                 if (event.keyCode == 32 && canJump) {
                     canJump = false;
-                    velocity.y += PLAYER_JUMP_HEIGHT;
+                    velocity.y += playerJumpHeight;
                     jumpSound.play();
                 }
 
@@ -755,7 +781,7 @@
         texts.add(backText);
 
         // Shop strength text
-        const strengthTextGeometry = new THREE.TextGeometry('Strength', {
+        const strengthTextGeometry = new THREE.TextGeometry('Strength $' + STRENGHT_COST, {
             font: font,
             size: 1,
             height: 0.25
@@ -768,7 +794,7 @@
         texts.add(strengthText);
 
         // Shop attack text
-        const attackTextGeometry = new THREE.TextGeometry('Attack', {
+        const attackTextGeometry = new THREE.TextGeometry('Attack $' + ATTACK_COST, {
             font: font,
             size: 1,
             height: 0.25
@@ -781,7 +807,7 @@
         texts.add(attackText);
 
         // Shop jump text
-        const jumpTextGeometry = new THREE.TextGeometry('Jump', {
+        const jumpTextGeometry = new THREE.TextGeometry('Jump $' + JUMP_COST, {
             font: font,
             size: 1,
             height: 0.25
@@ -794,7 +820,7 @@
         texts.add(jumpText);
 
         // Shop speed text
-        const speedTextGeometry = new THREE.TextGeometry('Speed', {
+        const speedTextGeometry = new THREE.TextGeometry('Speed $' + SPEED_COST, {
             font: font,
             size: 1,
             height: 0.25
@@ -822,16 +848,16 @@
 
         if (lock) {
             if (moveForward) {
-                velocity.z -= PLAYER_SPEED * delta;
+                velocity.z -= playerSpeed * delta;
             }
             if (moveLeft) {
-                velocity.x -= PLAYER_SPEED * delta;
+                velocity.x -= playerSpeed * delta;
             }
             if (moveRight) {
-                velocity.x += PLAYER_SPEED * delta;
+                velocity.x += playerSpeed * delta;
             }
             if (moveBackward) {
-                velocity.z += PLAYER_SPEED * delta;
+                velocity.z += playerSpeed * delta;
             }
         }
 
@@ -883,8 +909,7 @@
         }
 
         // Bullets
-        for (let i = 0; i < bullets.children.length; i++) {
-            const bullet = bullets.children[i];
+        for (const bullet of bullets.children) {
             bullet.translateZ(-BULLET_SPEED * delta);
 
             let kill = false;
@@ -898,8 +923,7 @@
             }
 
             else {
-                for (let j = 0; j < crates.children.length; j++) {
-                    const crate = crates.children[j];
+                for (const crate of crates.children) {
                     if (new THREE.Box3().setFromObject(crate).containsPoint(bullet.position)) {
                         kill = true;
                         break;
@@ -921,7 +945,7 @@
                                 hitSound.play();
 
                                 updatePlayer(player.id, {
-                                    health: player.health - rand(5, 20)
+                                    health: player.health - rand(Math.floor(getPlayer(bullet.playerId).attack / 2), getPlayer(bullet.playerId).attack)
                                 });
 
                                 sendMessage('player.health', {
@@ -981,8 +1005,7 @@
         }
 
         // Checks banks
-        for (let i = 0; i < banks.children.length; i++) {
-            const bank = banks.children[i];
+        for (const bank of banks.children) {
             if (new THREE.Box3().setFromObject(bank).containsPoint(new THREE.Vector3(camera.position.x, bank.position.y, camera.position.z))) {
                 if (rand(1, 25) == 1) {
                     coinSound.play();
@@ -1002,11 +1025,10 @@
         }
 
         // Checks hospitals
-        for (let i = 0; i < hospitals.children.length; i++) {
-            const hospital = hospitals.children[i];
+        for (const hospital of hospitals.children) {
             if (new THREE.Box3().setFromObject(hospital).containsPoint(new THREE.Vector3(camera.position.x, hospital.position.y, camera.position.z))) {
                 if (rand(1, 15) == 1 && player.money >= 2) {
-                    if (player.health + 1 <= PLAYER_MAX_HEALTH) {
+                    if (player.health + 1 <= player.strength) {
                         healSound.play();
 
                         updatePlayer(player.id, {
@@ -1029,8 +1051,7 @@
 
         // Checks doors
         if (player != undefined) {
-            for (let i = 0; i < doors.children.length; i++) {
-                const door = doors.children[i];
+            for (const door of doors.children) {
                 if (new THREE.Box3().setFromObject(player.group).intersectsBox(new THREE.Box3().setFromObject(door))) {
                     if (DEBUG) console.log('door hit');
 
@@ -1057,6 +1078,85 @@
 
                     break;
                 }
+            }
+        }
+
+        // Checks strength shop item
+        if (new THREE.Box3().setFromObject(strengthItem).containsPoint(new THREE.Vector3(camera.position.x, strengthItem.position.y, camera.position.z))) {
+            if (rand(1, 20) == 1 && player.money >= STRENGHT_COST) {
+                healSound.play();
+
+                updatePlayer(player.id, {
+                    money: player.money - STRENGHT_COST,
+                    health: player.health + STRENGHT_STEP,
+                    strength: player.strength + STRENGHT_STEP
+                });
+
+                sendMessage('player.health', {
+                    health: player.health
+                });
+
+                sendMessage('player.strength', {
+                    strength: player.strength
+                });
+
+                sendMessage('player.money', {
+                    money: player.money
+                });
+            }
+        }
+
+        // Checks attack shop item
+        if (new THREE.Box3().setFromObject(attackItem).containsPoint(new THREE.Vector3(camera.position.x, attackItem.position.y, camera.position.z))) {
+            if (rand(1, 20) == 1 && player.money >= ATTACK_COST) {
+                healSound.play();
+
+                updatePlayer(player.id, {
+                    money: player.money - ATTACK_COST,
+                    attack: player.attack + ATTACK_STEP
+                });
+
+                sendMessage('player.attack', {
+                    attack: player.attack
+                });
+
+                sendMessage('player.money', {
+                    money: player.money
+                });
+            }
+        }
+
+        // Checks attack jump item
+        if (new THREE.Box3().setFromObject(jumpItem).containsPoint(new THREE.Vector3(camera.position.x, jumpItem.position.y, camera.position.z))) {
+            if (rand(1, 20) == 1 && player.money >= JUMP_COST) {
+                healSound.play();
+
+                updatePlayer(player.id, {
+                    money: player.money - JUMP_COST
+                });
+
+                playerJumpHeight += JUMP_STEP;
+
+                sendMessage('player.money', {
+                    money: player.money
+                });
+            }
+        }
+
+        // Checks attack speed item
+        if (new THREE.Box3().setFromObject(speedItem).containsPoint(new THREE.Vector3(camera.position.x, speedItem.position.y, camera.position.z))) {
+            if (rand(1, 20) == 1 && player.money >= SPEED_COST) {
+                healSound.play();
+
+                updatePlayer(player.id, {
+                    money: player.money - SPEED_COST
+                });
+
+                playerSpeed += SPEED_STEP;
+
+                sendMessage('player.money', {
+                    money: player.money
+                });
             }
         }
 
