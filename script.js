@@ -1,13 +1,16 @@
-// (function () {
+(function () {
     // Constants
     const DEBUG = window.location.hostname != 'plaatworld3d.ml';
 
-    const MAX_CHAT = 10;
+    const CHAT_SERVER_PLAYER_ID = 0;
+    const CHAT_MAX = 10;
 
     const MAP_SIZE = 750;
     const MAP_GRAVITY = 6;
 
     const CRATE_SIZE = 10;
+
+    const BANK_SIZE = 5;
 
     const PLAYER_HEIGHT = 2;
     const PLAYER_WEIGHT = 40;
@@ -40,6 +43,7 @@
 
     const controlsLayerElement = document.getElementById('controls-layer');
     const playerListElement = document.getElementById('player-list');
+    const moneyLabelElement = document.getElementById('money-label');
     const healthBarElement = document.getElementById('health-bar');
     const chatListElement = document.getElementById('chat-list');
     const chatInputElement = document.getElementById('chat-input');
@@ -161,8 +165,16 @@
     function addChat (name, message) {
         chatListElement.innerHTML += '<div><b>' + name + '</b>: ' + message + '</div>';
 
-        if (chatListElement.children.length == MAX_CHAT + 1) {
+        if (chatListElement.children.length == CHAT_MAX + 1) {
             chatListElement.removeChild(chatListElement.firstChild);
+        }
+    }
+
+    function getPlayer (player_id) {
+        for (let i = 0; i < players.length; i++) {
+            if (players[i].id == player_id) {
+                return players[i];
+            }
         }
     }
 
@@ -188,6 +200,13 @@
                     }
                 }
 
+                if (props.money != undefined) {
+                    players[i].money = props.money;
+                    if (player_id == player.id) {
+                        moneyLabelElement.textContent = '$' + props.money;
+                    }
+                }
+
                 if (props.x != undefined) players[i].x = props.x;
                 if (props.y != undefined) players[i].y = props.y;
                 if (props.z != undefined) players[i].z = props.z;
@@ -210,9 +229,9 @@
         playerListElement.innerHTML = '';
         for (const otherPlayer of players) {
             if (DEBUG) {
-                playerListElement.innerHTML += '<div>#' + otherPlayer.id + ' - ' + otherPlayer.name + ' - ' + otherPlayer.health + ' - ' + otherPlayer.x.toFixed(2) + ' ' + otherPlayer.y.toFixed(2) + ' ' + otherPlayer.z.toFixed(2) + '</div>';
+                playerListElement.innerHTML += '<div>#' + otherPlayer.id + ' - ' + otherPlayer.name + ': ' + otherPlayer.health + ' - $' + otherPlayer.money + ' - ' + otherPlayer.x.toFixed(2) + ' ' + otherPlayer.y.toFixed(2) + ' ' + otherPlayer.z.toFixed(2) + '</div>';
             } else {
-                playerListElement.innerHTML += '<div>' + otherPlayer.name + '</div>';
+                playerListElement.innerHTML += '<div>' + otherPlayer.name + ': $' + otherPlayer.money + '</div>';
             }
         }
     }
@@ -281,6 +300,8 @@
             camera.position.y = data.y;
             camera.position.z = data.z;
 
+            moneyLabelElement.textContent = '$' + data.money;
+
             updatePlayerList();
         }
 
@@ -303,6 +324,18 @@
         if (type == 'player.health') {
             updatePlayer(data.id, {
                 health: data.health
+            });
+        }
+
+        if (type == 'player.money') {
+            updatePlayer(data.id, {
+                money: data.money
+            });
+        }
+
+        if (type == 'player.money.give') {
+            updatePlayer(data.playerId, {
+                money: getPlayer(data.playerId).money + data.money
             });
         }
 
@@ -356,7 +389,7 @@
         }
 
         if (type == 'player.chat') {
-            if (data.id == 0) {
+            if (data.id == CHAT_SERVER_PLAYER_ID) {
                 addChat('<u>Server</u>', data.message);
             }
             else {
@@ -520,6 +553,23 @@
         crates.add(crate);
     }
 
+    // Banks
+    const bankGeometry = new THREE.CircleGeometry(BANK_SIZE, 32);
+    const bankTexture = new THREE.TextureLoader().load('/images/bank.jpg');
+    const bankMaterial = new THREE.MeshBasicMaterial({ map: bankTexture });
+
+    const banks = new THREE.Group();
+    scene.add(banks);
+
+    for (let i = 0; i < MAP_SIZE * MAP_SIZE / 10000; i++) {
+        const bank = new THREE.Mesh(bankGeometry,  bankMaterial);
+        bank.rotation.x = -Math.PI / 2;
+        bank.position.x = rand((-MAP_SIZE / 2) / BANK_SIZE, (MAP_SIZE / 2) / BANK_SIZE) * BANK_SIZE;
+        bank.position.z = rand((-MAP_SIZE / 2) / BANK_SIZE, (MAP_SIZE / 2) / BANK_SIZE) * BANK_SIZE;
+        bank.position.y = 0.05;
+        banks.add(bank);
+    }
+
     // PlaatWorld 3D logo
     const loader = new THREE.FontLoader();
     let logo;
@@ -653,7 +703,7 @@
                                 hitSound.play();
 
                                 updatePlayer(player.id, {
-                                    health: player.health - rand(4, 10)
+                                    health: player.health - rand(5, 25)
                                 });
 
                                 sendMessage('player.health', {
@@ -661,6 +711,15 @@
                                 });
 
                                 if (player.health <= 0) {
+                                    updatePlayer(bullet.playerId, {
+                                        money: getPlayer(bullet.playerId).money + player.money
+                                    });
+
+                                    sendMessage('player.money.give', {
+                                        playerId: bullet.playerId,
+                                        money: player.money
+                                    });
+
                                     window.location.reload();
                                 }
                             }
@@ -703,6 +762,19 @@
             });
         }
 
+        // Checks banks
+        for (let i = 0; i < banks.children.length; i++) {
+            const bank = banks.children[i];
+            if (new THREE.Box3().setFromObject(bank).containsPoint(new THREE.Vector3(camera.position.x, bank.position.y, camera.position.z))) {
+                if (rand(1, 25) == 1) {
+                    updatePlayer(player.id, {
+                        money: player.money + 1
+                    });
+                }
+                break;
+            }
+        }
+
         // Update logo
         if (logo != undefined) {
             logo.rotation.y += 0.75 * delta;
@@ -720,4 +792,4 @@
     }
 
     loop();
-// })();
+})();

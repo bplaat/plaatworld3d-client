@@ -62,11 +62,18 @@ a {
     background-color: rgba(0, 0, 0, 0.65);
 }
 
-.footer {
+.money-label {
     position: absolute;
+    top: 16px;
     width: 100%;
     text-align: center;
+}
+
+.footer-label {
+    position: absolute;
     bottom: 16px;
+    width: 100%;
+    text-align: center;
 }
 
 .player-list {
@@ -79,7 +86,7 @@ a {
     visibility: hidden;
 }
 
-.version, .health-bar {
+.version-label, .health-bar {
     position: absolute;
     top: 16px;
     right: 16px;
