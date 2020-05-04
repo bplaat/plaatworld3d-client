@@ -1,5 +1,7 @@
 (function () {
     // Constants
+    const VERSION = '0.4.0';
+
     const DEBUG = window.location.hostname != 'plaatworld3d.ml';
 
     const CHAT_SERVER_PLAYER_ID = 0;
@@ -26,11 +28,11 @@
     const PLAYER_JUMP_HEIGHT = 100;
 
     const BULLET_SPEED = 40;
-    const BULLET_PRICE = 5;
     const BULLET_TIMEOUT = 2500;
 
     const SHOP_DISTANCE = MAP_SIZE * 3;
-    const SHOP_SIZE = MAP_SIZE;
+    const SHOP_SIZE = 32;
+    const SHOP_ITEM_SIZE = 6;
 
     // Rand
     let seed = 1;
@@ -48,6 +50,7 @@
     let lock = false;
 
     const menuLayerElement = document.getElementById('menu-layer');
+    const versionLabelElement = document.getElementById('version-label');
     const nameInput = document.getElementById('name-input');
     const playButton = document.getElementById('play-button');
 
@@ -57,6 +60,9 @@
     const healthBarElement = document.getElementById('health-bar');
     const chatListElement = document.getElementById('chat-list');
     const chatInputElement = document.getElementById('chat-input');
+
+    // Version label
+    versionLabelElement.textContent = 'v' + VERSION;
 
     // Name input
     if (localStorage.getItem('name') == null) {
@@ -307,17 +313,21 @@
         player.group.add(player.body);
     }
 
-    ws.onopen = function (event) {
-        sendMessage('player.connect', {
-            name: localStorage.getItem('name')
-        });
-    };
-
     ws.onmessage = function (event) {
         if (DEBUG) console.log('RECEIVED: ', event.data);
         const message = JSON.parse(event.data);
         const type = message.type;
         const data = message.data;
+
+        if (type == 'server.info') {
+            if (data.version == VERSION) {
+                sendMessage('player.connect', {
+                    name: localStorage.getItem('name')
+                });
+            } else {
+                alert('The server uses a different version!\nServer version: ' + data.version + '\nClient version: ' + VERSION);
+            }
+        }
 
         if (type == 'player.init') {
             player = data;
@@ -526,17 +536,9 @@
 
     window.addEventListener('mousedown', function (event) {
         if (lock) {
-            if (Date.now() - lastShot > 500 && player.money >= BULLET_PRICE) {
+            if (Date.now() - lastShot > 500) {
                 lastShot = Date.now();
                 shoot = true;
-
-                updatePlayer(player.id, {
-                    money: player.money - BULLET_PRICE
-                });
-
-                sendMessage('player.money', {
-                    money: player.money
-                });
             }
         }
     });
@@ -642,13 +644,13 @@
 
     // Map shop door
     const shopDoor = new THREE.Mesh(doorGeometry, doorMaterial);
-    shopDoor.destination = new THREE.Vector3(0, 0, SHOP_DISTANCE);
+    shopDoor.destination = new THREE.Vector3(0, 0, SHOP_DISTANCE + SHOP_SIZE - 10);
     shopDoor.position.y = DOOR_SIZE / 2;
     shopDoor.position.z = -25;
     doors.add(shopDoor);
 
     // Shop floor
-    const shopFloorGeometry = new THREE.PlaneGeometry(SHOP_SIZE, SHOP_SIZE);
+    const shopFloorGeometry = new THREE.CircleGeometry(SHOP_SIZE, 64);
     const shopFloorTexture = new THREE.TextureLoader().load('/images/floor.jpg');
     const shopFloorMaterial = new THREE.MeshBasicMaterial({ map: shopFloorTexture });
     shopFloorMaterial.map.repeat.set(SHOP_SIZE / 5, SHOP_SIZE / 5);
@@ -663,8 +665,50 @@
     const backDoor = new THREE.Mesh(doorGeometry, doorMaterial);
     backDoor.destination = new THREE.Vector3(0, 0, -20);
     backDoor.position.y = DOOR_SIZE / 2;
-    backDoor.position.z = SHOP_DISTANCE - 10;
+    backDoor.position.z = SHOP_DISTANCE - SHOP_SIZE + 10;
     doors.add(backDoor);
+
+    const shopItemGeometry = new THREE.CircleGeometry(SHOP_ITEM_SIZE, 32);
+
+    // Shop strength
+    const strengthItemTexture = new THREE.TextureLoader().load('/images/strength.jpg');
+    const strengthItemMaterial = new THREE.MeshBasicMaterial({ map: strengthItemTexture });
+    const strengthItem = new THREE.Mesh(shopItemGeometry,  strengthItemMaterial);
+    strengthItem.rotation.x = -Math.PI / 2;
+    strengthItem.position.x = -SHOP_ITEM_SIZE * 2.5;
+    strengthItem.position.y = 0.1;
+    strengthItem.position.z = SHOP_DISTANCE - SHOP_ITEM_SIZE * 1.5;
+    scene.add(strengthItem);
+
+    // Shop attack
+    const attackItemTexture = new THREE.TextureLoader().load('/images/attack.jpg');
+    const attackItemMaterial = new THREE.MeshBasicMaterial({ map: attackItemTexture });
+    const attackItem = new THREE.Mesh(shopItemGeometry,  attackItemMaterial);
+    attackItem.rotation.x = -Math.PI / 2;
+    attackItem.position.x = SHOP_ITEM_SIZE * 2.5;
+    attackItem.position.y = 0.1;
+    attackItem.position.z = SHOP_DISTANCE - SHOP_ITEM_SIZE * 1.5;
+    scene.add(attackItem);
+
+    // Shop jump
+    const jumpItemTexture = new THREE.TextureLoader().load('/images/jump.jpg');
+    const jumpItemMaterial = new THREE.MeshBasicMaterial({ map: jumpItemTexture });
+    const jumpItem = new THREE.Mesh(shopItemGeometry,  jumpItemMaterial);
+    jumpItem.rotation.x = -Math.PI / 2;
+    jumpItem.position.x = -SHOP_ITEM_SIZE * 2.5;
+    jumpItem.position.y = 0.1;
+    jumpItem.position.z = SHOP_DISTANCE + SHOP_ITEM_SIZE * 1.5;
+    scene.add(jumpItem);
+
+    // Shop speed
+    const speedItemTexture = new THREE.TextureLoader().load('/images/speed.jpg');
+    const speedItemMaterial = new THREE.MeshBasicMaterial({ map: speedItemTexture });
+    const speedItem = new THREE.Mesh(shopItemGeometry,  speedItemMaterial);
+    speedItem.rotation.x = -Math.PI / 2;
+    speedItem.position.x = SHOP_ITEM_SIZE * 2.5;
+    speedItem.position.y = 0.1;
+    speedItem.position.z = SHOP_DISTANCE + SHOP_ITEM_SIZE * 1.5;
+    scene.add(speedItem);
 
     // Texts
     const textMaterial = new THREE.MeshNormalMaterial();
@@ -675,8 +719,8 @@
         // PlaatWorld 3D logo
         const logoTextGeometry = new THREE.TextGeometry('PlaatWorld 3D', {
             font: font,
-            size: 0.75,
-            height: 0.2
+            size: 1,
+            height: 0.25
         });
         logoTextGeometry.center();
         const logoText = new THREE.Mesh(logoTextGeometry, textMaterial);
@@ -706,9 +750,61 @@
         backTextGeometry.center();
         const backText = new THREE.Mesh(backTextGeometry, textMaterial);
         backText.position.y = DOOR_SIZE + 1;
-        backText.position.z = SHOP_DISTANCE - 10;
+        backText.position.z = SHOP_DISTANCE - SHOP_SIZE + 10;
         backText.rotation.y = random() *  Math.PI;
         texts.add(backText);
+
+        // Shop strength text
+        const strengthTextGeometry = new THREE.TextGeometry('Strength', {
+            font: font,
+            size: 1,
+            height: 0.25
+        });
+        strengthTextGeometry.center();
+        const strengthText = new THREE.Mesh(strengthTextGeometry, textMaterial);
+        strengthText.position.x = -SHOP_ITEM_SIZE * 2.5;
+        strengthText.position.y = PLAYER_HEIGHT;
+        strengthText.position.z = SHOP_DISTANCE - SHOP_ITEM_SIZE * 1.5;
+        texts.add(strengthText);
+
+        // Shop attack text
+        const attackTextGeometry = new THREE.TextGeometry('Attack', {
+            font: font,
+            size: 1,
+            height: 0.25
+        });
+        attackTextGeometry.center();
+        const attackText = new THREE.Mesh(attackTextGeometry, textMaterial);
+        attackText.position.x = SHOP_ITEM_SIZE * 2.5;
+        attackText.position.y = PLAYER_HEIGHT;
+        attackText.position.z = SHOP_DISTANCE - SHOP_ITEM_SIZE * 1.5;
+        texts.add(attackText);
+
+        // Shop jump text
+        const jumpTextGeometry = new THREE.TextGeometry('Jump', {
+            font: font,
+            size: 1,
+            height: 0.25
+        });
+        jumpTextGeometry.center();
+        const jumpText = new THREE.Mesh(jumpTextGeometry, textMaterial);
+        jumpText.position.x = -SHOP_ITEM_SIZE * 2.5;
+        jumpText.position.y = PLAYER_HEIGHT;
+        jumpText.position.z = SHOP_DISTANCE + SHOP_ITEM_SIZE * 1.5;
+        texts.add(jumpText);
+
+        // Shop speed text
+        const speedTextGeometry = new THREE.TextGeometry('Speed', {
+            font: font,
+            size: 1,
+            height: 0.25
+        });
+        speedTextGeometry.center();
+        const speedText = new THREE.Mesh(speedTextGeometry, textMaterial);
+        speedText.position.x = SHOP_ITEM_SIZE * 2.5;
+        speedText.position.y = PLAYER_HEIGHT;
+        speedText.position.z = SHOP_DISTANCE + SHOP_ITEM_SIZE * 1.5;
+        texts.add(speedText);
     });
 
     // Update
@@ -739,9 +835,7 @@
             }
         }
 
-        const raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0), 0, PLAYER_HEIGHT);
-        raycaster.ray.origin.copy(camera.position);
-        raycaster.ray.origin.y -= PLAYER_HEIGHT;
+        const raycaster = new THREE.Raycaster(new THREE.Vector3().copy(camera.position), new THREE.Vector3(0, -1, 0), 0, PLAYER_HEIGHT + 0.1);
         if (velocity.y < 0 && raycaster.intersectObjects(crates.children).length > 0) {
             velocity.y = 0;
             canJump = true;
