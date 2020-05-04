@@ -429,31 +429,31 @@
     let lastShot = Date.now();
 
     window.addEventListener('keydown', function (event) {
-        event.preventDefault();
+        if (lock) {
+            event.preventDefault();
 
-        if (chatMode) {
-            if (event.keyCode == 8) {
-                chatMessage = chatMessage.substring(0, chatMessage.length - 1);
-            } else if (event.keyCode == 13) {
-                chatMode = false;
-                chatInputElement.classList.remove('active');
+            if (chatMode) {
+                if (event.keyCode == 8) {
+                    chatMessage = chatMessage.substring(0, chatMessage.length - 1);
+                } else if (event.keyCode == 13) {
+                    chatMode = false;
+                    chatInputElement.classList.remove('active');
 
-                if (chatMessage != '') {
-                    sendMessage('player.chat', {
-                        message: chatMessage
-                    });
+                    if (chatMessage != '') {
+                        sendMessage('player.chat', {
+                            message: chatMessage
+                        });
 
-                    addChat(player.name, chatMessage);
+                        addChat(player.name, chatMessage);
 
-                    chatMessage = '';
+                        chatMessage = '';
+                    }
+                } else if (chatMessage.length < 24) {
+                    chatMessage += event.key;
                 }
-            } else if (chatMessage.length < 24) {
-                chatMessage += event.key;
-            }
 
-            chatInputElement.textContent = chatMessage;
-        } else {
-            if (lock) {
+                chatInputElement.textContent = chatMessage;
+            } else {
                 if (event.keyCode == 87 || event.keyCode == 38) {
                     moveForward = true;
                 }
@@ -477,18 +477,18 @@
                     chatInputElement.classList.add('active');
                 }
             }
-            else {
-                if (event.keyCode == 13) {
-                    requestLock();
-                }
+        }
+        else {
+            if (event.keyCode == 13) {
+                requestLock();
             }
         }
     });
 
     window.addEventListener('keyup', function (event) {
-        event.preventDefault();
-
         if (lock) {
+            event.preventDefault();
+
             if (event.keyCode == 87 || event.keyCode == 38) {
                 moveForward = false;
             }
@@ -505,18 +505,20 @@
     });
 
     window.addEventListener('mousedown', function (event) {
-        event.preventDefault();
+        if (lock) {
+            event.preventDefault();
 
-        if (lock && Date.now() - lastShot > 500) {
-            lastShot = Date.now();
-            shoot = true;
+            if (Date.now() - lastShot > 500) {
+                lastShot = Date.now();
+                shoot = true;
+            }
         }
     });
 
     window.addEventListener('mousemove', function (event) {
-        event.preventDefault();
-
         if (lock) {
+            event.preventDefault();
+
             const euler = new THREE.Euler(0, 0, 0, 'YXZ');
             euler.setFromQuaternion(camera.quaternion);
             euler.y -= event.movementX * PLAYER_SENSITIVITY;
