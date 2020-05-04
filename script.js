@@ -147,7 +147,7 @@
     scene.fog = new THREE.Fog(backgroundColor, 0, 350);
 
     // Camera
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 400);
     camera.position.z = MAP_SIZE;
 
     // Renderer
@@ -161,6 +161,16 @@
 
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
+
+    // Stats
+    if (DEBUG) {
+        var stats = new Stats();
+        stats.dom.style.top = '';
+        stats.dom.style.left = '';
+        stats.dom.style.right = '8px';
+        stats.dom.style.bottom = '8px';
+        document.body.appendChild(stats.dom);
+    }
 
     // Websockets communication
     const namePlateGeometry = new THREE.PlaneGeometry(1, 0.25);
@@ -1183,9 +1193,11 @@
 
     // Loop
     function loop () {
+        if (DEBUG) stats.begin();
         update();
         TWEEN.update();
         renderer.render(scene, camera);
+        if (DEBUG) stats.end();
         requestAnimationFrame(loop);
     }
 
