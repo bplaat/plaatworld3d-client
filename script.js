@@ -15,11 +15,11 @@
     const HOSPITAL_SIZE = 5;
 
     const PLAYER_HEIGHT = 2;
-    const PLAYER_WEIGHT = 50;
+    const PLAYER_WEIGHT = 25;
     const PLAYER_MAX_HEALTH = 100;
     const PLAYER_SENSITIVITY = 0.004;
     const PLAYER_SPEED = 150;
-    const PLAYER_JUMP_HEIGHT = 200;
+    const PLAYER_JUMP_HEIGHT = 100;
 
     const BULLET_SPEED = 40;
     const BULLET_PRICE = 5;
@@ -166,7 +166,14 @@
     }
 
     function addChat (name, message) {
-        chatListElement.innerHTML += '<div><b>' + name + '</b>: ' + message + '</div>';
+        const chatItem = document.createElement('div');
+        chatListElement.appendChild(chatItem);
+
+        const chatName = document.createElement('b');
+        chatName.textContent = name;
+        chatItem.appendChild(chatName);
+
+        chatItem.appendChild(document.createTextNode(': ' + message));
 
         if (chatListElement.children.length == CHAT_MAX + 1) {
             chatListElement.removeChild(chatListElement.firstChild);
@@ -237,9 +244,13 @@
         playerListElement.innerHTML = '';
         for (const otherPlayer of sortedPlayers) {
             if (DEBUG) {
-                playerListElement.innerHTML += '<div>#' + otherPlayer.id + ' - ' + otherPlayer.name + ': ' + otherPlayer.health + ' - $' + otherPlayer.money + ' - ' + otherPlayer.x.toFixed(2) + ' ' + otherPlayer.y.toFixed(2) + ' ' + otherPlayer.z.toFixed(2) + '</div>';
+                const playerItem = document.createElement('div');
+                playerItem.textContent = '#' + otherPlayer.id + ' - ' + otherPlayer.name + ': ' + otherPlayer.health + ' - $' + otherPlayer.money + ' - ' + otherPlayer.x.toFixed(2) + ' ' + otherPlayer.y.toFixed(2) + ' ' + otherPlayer.z.toFixed(2);
+                playerListElement.appendChild(playerItem);
             } else {
-                playerListElement.innerHTML += '<div>' + otherPlayer.name + ': $' + otherPlayer.money + '</div>';
+                const playerItem = document.createElement('div');
+                playerItem.textContent = otherPlayer.name + ': $' + otherPlayer.money;
+                playerListElement.appendChild(playerItem);
             }
         }
     }
@@ -398,7 +409,7 @@
 
         if (type == 'player.chat') {
             if (data.id == CHAT_SERVER_PLAYER_ID) {
-                addChat('<u>Server</u>', data.message);
+                addChat('Server', data.message);
             }
             else {
                 for (let i = 0; i < players.length; i++) {
