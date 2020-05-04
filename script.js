@@ -8,6 +8,8 @@
     const MAP_SIZE = 750;
     const MAP_GRAVITY = 6;
 
+    const SPAWN_SIZE = 10;
+
     const CRATE_SIZE = 10;
 
     const BANK_SIZE = 5;
@@ -564,6 +566,18 @@
     const ground = new THREE.Mesh(groundGeometry, groundMaterial);
     ground.rotation.x = -Math.PI / 2;
     scene.add(ground);
+
+    // Spawn
+    const spawnGeometry = new THREE.CircleGeometry(SPAWN_SIZE, 32);
+    const spawnTexture = new THREE.TextureLoader().load('/images/floor.jpg');
+    const spawnMaterial = new THREE.MeshBasicMaterial({ map: spawnTexture });
+    spawnMaterial.map.repeat.set(4, 4);
+    spawnMaterial.map.wrapS = THREE.RepeatWrapping;
+    spawnMaterial.map.wrapT = THREE.RepeatWrapping;
+    const spawn = new THREE.Mesh(spawnGeometry, spawnMaterial);
+    spawn.rotation.x = -Math.PI / 2;
+    spawn.position.y = 0.05;
+    scene.add(spawn);
 
     // Crates
     const crateGeometry = new THREE.BoxGeometry(CRATE_SIZE, CRATE_SIZE, CRATE_SIZE);
