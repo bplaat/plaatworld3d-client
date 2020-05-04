@@ -5,6 +5,7 @@
 
     const CHAT_SERVER_PLAYER_ID = 0;
     const CHAT_MAX = 10;
+    const CHAT_TIMEOUT = 10000;
 
     const MAP_SIZE = 750;
     const MAP_GRAVITY = 6;
@@ -39,7 +40,7 @@
     const ATTACK_STEP = 2;
 
     const JUMP_COST = 25;
-    const JUMP_STEP = 10;
+    const JUMP_STEP = 5;
 
     const SPEED_COST = 20;
     const SPEED_STEP = 5;
@@ -204,6 +205,12 @@
         if (chatListElement.children.length == CHAT_MAX + 1) {
             chatListElement.removeChild(chatListElement.firstChild);
         }
+
+        setTimeout(function () {
+            if (chatListElement.children.length != 0) {
+                chatListElement.removeChild(chatListElement.firstChild);
+            }
+        }, CHAT_TIMEOUT);
     }
 
     function getPlayer (player_id) {
