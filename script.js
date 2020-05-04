@@ -2,6 +2,7 @@
     // Constants
     const VERSION = '0.4.0';
     const DEBUG = window.location.hostname != 'plaatworld3d.ml';
+    const DEBUG_CONSOLE = DEBUG && false;
 
     const CHAT_SERVER_PLAYER_ID = 0;
     const CHAT_MAX = 10;
@@ -109,6 +110,11 @@
         }
     });
 
+    // Stats label
+    if (DEBUG) {
+        statsLabelElement.classList.add('hidden');
+    }
+
     // Audio
     class Sound {
         constructor (audio_url) {
@@ -184,11 +190,11 @@
     if (window.location.hostname == 'plaatworld3d.ml') {
         ws = new WebSocket('wss://plaatworld3d.herokuapp.com/');
     } else {
-        ws = new WebSocket('ws://localhost:8081/');
+        ws = new WebSocket('ws://192.168.2.96:8081/');
     }
 
     function sendMessage (type, data) {
-        if (DEBUG) console.log('SENT: ', JSON.stringify({ type: type, data: data }));
+        if (DEBUG_CONSOLE) console.log('SENT: ', JSON.stringify({ type: type, data: data }));
         ws.send(JSON.stringify({ type: type, data: data }));
     }
 
@@ -336,7 +342,7 @@
     }
 
     ws.onmessage = function (event) {
-        if (DEBUG) console.log('RECEIVED: ', event.data);
+        if (DEBUG_CONSOLE) console.log('RECEIVED: ', event.data);
         const message = JSON.parse(event.data);
         const type = message.type;
         const data = message.data;
@@ -939,15 +945,15 @@
 
                 for (const otherPlayer of players) {
                     if (bullet.playerId != otherPlayer.id) {
-                        if (DEBUG) console.log('Testing ' + otherPlayer.id);
+                        if (DEBUG_CONSOLE) console.log('Testing ' + otherPlayer.id);
 
                         if (
                             new THREE.Box3().setFromObject(otherPlayer.group).containsPoint(bullet.position)
                         ) {
-                            if (DEBUG) console.log('Colliding ' + otherPlayer.id + ' Player ' + player.id);
+                            if (DEBUG_CONSOLE) console.log('Colliding ' + otherPlayer.id + ' Player ' + player.id);
 
                             if (otherPlayer.id == player.id) {
-                                if (DEBUG) console.log('hit');
+                                if (DEBUG_CONSOLE) console.log('Hit');
 
                                 hitSound.play();
 
@@ -1060,7 +1066,7 @@
         if (player != undefined) {
             for (const door of doors.children) {
                 if (new THREE.Box3().setFromObject(player.group).intersectsBox(new THREE.Box3().setFromObject(door))) {
-                    if (DEBUG) console.log('door hit');
+                    if (DEBUG_CONSOLE) console.log('Door Hit');
 
                     doorSound.play();
 
