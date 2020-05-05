@@ -163,14 +163,12 @@
     });
 
     // Stats
-    if (DEBUG) {
-        var stats = new Stats();
-        stats.dom.style.top = '';
-        stats.dom.style.left = '';
-        stats.dom.style.right = '8px';
-        stats.dom.style.bottom = '8px';
-        document.body.appendChild(stats.dom);
-    }
+    var stats = new Stats();
+    stats.dom.style.top = '';
+    stats.dom.style.left = '';
+    stats.dom.style.right = '8px';
+    stats.dom.style.bottom = '8px';
+    document.body.appendChild(stats.dom);
 
     // Websockets communication
     const namePlateGeometry = new THREE.PlaneGeometry(1, 0.25);
@@ -1218,12 +1216,12 @@
 
     // Loop
     function loop () {
-        if (DEBUG) stats.begin();
+        stats.begin();
         update();
         TWEEN.update();
         renderer.render(scene, camera);
-        if (DEBUG) stats.end();
-        requestAnimationFrame(loop);
+        stats.end();
+        window.requestAnimationFrame(loop);
     }
 
     loop();
