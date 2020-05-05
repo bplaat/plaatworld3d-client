@@ -264,15 +264,21 @@
                 if (props.attack != undefined) players[i].attack = props.attack;
                 if (props.money != undefined) players[i].money = props.money;
 
-                if (props.x != undefined) players[i].x = props.x;
-                if (props.y != undefined) players[i].y = props.y;
-                if (props.z != undefined) players[i].z = props.z;
+                if (props.position != undefined) {
+                    players[i].position = props.position;
 
-                if (props.x != undefined || props.y != undefined || props.z != undefined) {
                     new TWEEN.Tween(players[i].group.position)
-                        .to({ x: props.x, y: props.y, z: props.z }, 75)
+                        .to(props.position, 75)
                         .easing(TWEEN.Easing.Quadratic.InOut)
                         .start();
+                }
+
+                if (props.rotation != undefined) {
+                    players[i].rotation = props.rotation;
+
+                    players[i].head.rotation.x = props.rotation.x;
+                    players[i].head.rotation.y = props.rotation.y;
+                    players[i].head.rotation.z = props.rotation.z;
                 }
 
                 break;
@@ -299,7 +305,9 @@
         for (const otherPlayer of sortedPlayers) {
             if (DEBUG) {
                 const playerItem = document.createElement('div');
-                playerItem.textContent = '#' + otherPlayer.id + ' - ' + otherPlayer.name + ': Money: $' + otherPlayer.money + ' - Attack: ' + otherPlayer.attack + ' - Health: ' + otherPlayer.health + '/' + otherPlayer.strength + ' - Position: ' + otherPlayer.x.toFixed(2) + ' ' + otherPlayer.y.toFixed(2) + ' ' + otherPlayer.z.toFixed(2);
+                playerItem.textContent = '#' + otherPlayer.id + ' - ' + otherPlayer.name + ': Money: $' + otherPlayer.money +
+                    ' - Attack: ' + otherPlayer.attack + ' - Health: ' + otherPlayer.health + '/' + otherPlayer.strength +
+                    ' - Position: ' + otherPlayer.position.x.toFixed(2) + ' ' + otherPlayer.position.y.toFixed(2) + ' ' + otherPlayer.position.z.toFixed(2);
                 playerListElement.appendChild(playerItem);
             } else {
                 const playerItem = document.createElement('div');
@@ -327,9 +335,9 @@
 
     function createPlayerGroup (player, visible) {
         player.group = new THREE.Group();
-        player.group.position.x = player.x;
-        player.group.position.y = player.y;
-        player.group.position.z = player.z;
+        player.group.position.x = player.position.x;
+        player.group.position.y = player.position.y;
+        player.group.position.z = player.position.z;
         if (visible) playersGroup.add(player.group);
 
         player.namePlateCanvas = document.createElement('canvas');
@@ -344,6 +352,9 @@
         player.group.add(player.namePlate);
 
         player.head = new THREE.Mesh(headGeometry, headMaterials);
+        player.head.rotation.x = player.rotation.x;
+        player.head.rotation.y = player.rotation.y;
+        player.head.rotation.z = player.rotation.z;
         player.group.add(player.head);
 
         player.body = new THREE.Mesh(bodyGeometry, bodyMaterial);
@@ -373,9 +384,9 @@
 
             createPlayerGroup(player, false);
 
-            camera.position.x = data.x;
-            camera.position.y = data.y;
-            camera.position.z = data.z;
+            camera.position.x = data.position.x;
+            camera.position.y = data.position.y;
+            camera.position.z = data.position.z;
 
             updateStatsLabel();
             updatePlayerList();
@@ -432,14 +443,9 @@
                 if (players[i].id == data.id) {
 
                     updatePlayer(data.id, {
-                        x: data.x,
-                        y: data.y,
-                        z: data.z
+                        position: data.position,
+                        rotation: data.rotation
                     });
-
-                    players[i].head.rotation.x = data.rotation.x;
-                    players[i].head.rotation.y = data.rotation.y;
-                    players[i].head.rotation.z = data.rotation.z;
 
                     break;
                 }
@@ -452,9 +458,9 @@
             const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
             bullet.playerId = data.playerId;
             bullet.createdAt = data.createdAt;
-            bullet.position.x = data.x;
-            bullet.position.y = data.y;
-            bullet.position.z = data.z;
+            bullet.position.x = data.position.x;
+            bullet.position.y = data.position.y;
+            bullet.position.z = data.position.z;
             bullet.rotation.x = data.rotation.x;
             bullet.rotation.y = data.rotation.y;
             bullet.rotation.z = data.rotation.z;
@@ -907,15 +913,24 @@
             updateTime = Date.now();
 
             updatePlayer(player.id, {
-                x: camera.position.x,
-                y: camera.position.y,
-                z: camera.position.z
+                position: {
+                    x: camera.position.x,
+                    y: camera.position.y,
+                    z: camera.position.z,
+                },
+                rotation: {
+                    x: camera.rotation.x,
+                    y: camera.rotation.y,
+                    z: camera.rotation.z
+                }
             });
 
             sendMessage('player.move', {
-                x: camera.position.x,
-                y: camera.position.y,
-                z: camera.position.z,
+                position: {
+                    x: camera.position.x,
+                    y: camera.position.y,
+                    z: camera.position.z,
+                },
                 rotation: {
                     x: camera.rotation.x,
                     y: camera.rotation.y,
@@ -1016,9 +1031,11 @@
 
             sendMessage('player.shoot', {
                 createdAt: bullet.createdAt,
-                x: camera.position.x,
-                y: camera.position.y,
-                z: camera.position.z,
+                position: {
+                    x: camera.position.x,
+                    y: camera.position.y,
+                    z: camera.position.z,
+                },
                 rotation: {
                     x: camera.rotation.x,
                     y: camera.rotation.y,
@@ -1083,15 +1100,19 @@
                     camera.position.copy(door.destination);
 
                     updatePlayer(player.id, {
-                        x: door.destination.x,
-                        y: door.destination.y,
-                        z: door.destination.z
+                        position: {
+                            x: door.destination.x,
+                            y: door.destination.y,
+                            z: door.destination.z
+                        }
                     });
 
                     sendMessage('player.move', {
-                        x: door.destination.x,
-                        y: door.destination.y,
-                        z: door.destination.z,
+                        position: {
+                            x: door.destination.x,
+                            y: door.destination.y,
+                            z: door.destination.z,
+                        },
                         rotation: {
                             x: camera.rotation.x,
                             y: camera.rotation.y,
