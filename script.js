@@ -200,7 +200,7 @@
     if (window.location.hostname == 'plaatworld3d.ml') {
         ws = new WebSocket('wss://plaatworld3d.herokuapp.com/');
     } else {
-        ws = new WebSocket('ws://192.168.2.96:8081/');
+        ws = new WebSocket('ws://localhost:8081/');
     }
 
     function sendMessage (type, data) {
