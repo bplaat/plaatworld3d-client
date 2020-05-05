@@ -44,7 +44,7 @@
     const JUMP_STEP = 5;
 
     const SPEED_COST = 20;
-    const SPEED_STEP = 5;
+    const SPEED_STEP = 10;
 
     // Rand
     let seed = 1;
@@ -63,8 +63,8 @@
 
     const menuLayerElement = document.getElementById('menu-layer');
     const versionLabelElement = document.getElementById('version-label');
-    const nameInput = document.getElementById('name-input');
-    const playButton = document.getElementById('play-button');
+    const nameInputElement = document.getElementById('name-input');
+    const playButtonElement = document.getElementById('play-button');
 
     const controlsLayerElement = document.getElementById('controls-layer');
     const playerListElement = document.getElementById('player-list');
@@ -78,15 +78,15 @@
 
     // Name input
     if (localStorage.getItem('name') == null) {
-        localStorage.setItem('name', nameInput.value);
+        localStorage.setItem('name', nameInputElement.value);
     } else {
-        nameInput.value = localStorage.getItem('name');
+        nameInputElement.value = localStorage.getItem('name');
     }
 
-    nameInput.addEventListener('input', function () {
-        localStorage.setItem('name', nameInput.value);
-        sendMessage('player.name', { name: nameInput.value });
-        updatePlayer(player.id, { name: nameInput.value });
+    nameInputElement.addEventListener('input', function () {
+        localStorage.setItem('name', nameInputElement.value);
+        sendMessage('player.name', { name: nameInputElement.value });
+        updatePlayer(player.id, { name: nameInputElement.value });
     });
 
     // Play button
@@ -94,14 +94,14 @@
         renderer.domElement.requestPointerLock();
     }
 
-    playButton.addEventListener('click', function () {
+    playButtonElement.addEventListener('click', function () {
         requestLock();
     });
 
     document.addEventListener('pointerlockchange', function () {
         lock = document.pointerLockElement == renderer.domElement;
         if (lock) {
-            nameInput.blur();
+            nameInputElement.blur();
             menuLayerElement.classList.add('hidden');
             controlsLayerElement.classList.remove('hidden');
         } else {
