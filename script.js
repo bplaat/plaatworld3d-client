@@ -1,6 +1,6 @@
 (function () {
     // Constants
-    const VERSION = '0.4.0';
+    const VERSION = '0.4.1';
     const DEBUG = window.location.hostname != 'plaatworld3d.ml';
     const DEBUG_CONSOLE = DEBUG && false;
 
@@ -16,11 +16,14 @@
     const CRATE_SIZE = 10;
 
     const BANK_SIZE = 5;
+    const BANK_TIMEOUT = 500;
 
     const HOSPITAL_SIZE = 5;
+    const HOSPITAL_TIMEOUT = 250;
 
     const DOOR_SIZE = 4;
 
+    const PLAYER_MOVE_TIMEOUT = 150;
     const PLAYER_HEIGHT = 2;
     const PLAYER_WEIGHT = 25;
     const PLAYER_SENSITIVITY = 0.004;
@@ -33,6 +36,7 @@
     const SHOP_DISTANCE = MAP_SIZE * 3;
     const SHOP_SIZE = 32;
     const SHOP_ITEM_SIZE = 6;
+    const SHOP_TIMEOUT = 500;
 
     const STRENGHT_COST = 10;
     const STRENGHT_STEP = 2;
@@ -46,7 +50,14 @@
     const SPEED_COST = 20;
     const SPEED_STEP = 10;
 
-    // Rand
+    const MOVEMENT_PRECISION = 3;
+
+    // Round function
+    function round (number, precision) {
+        return Number(number.toFixed(precision));
+    }
+
+    // Rand functions
     let seed = 1;
 
     function random() {
@@ -266,7 +277,7 @@
                     players[i].position = props.position;
 
                     new TWEEN.Tween(players[i].group.position)
-                        .to(props.position, 75)
+                        .to(props.position, PLAYER_MOVE_TIMEOUT / 3 * 2)
                         .easing(TWEEN.Easing.Quadratic.InOut)
                         .start();
                 }
@@ -305,7 +316,7 @@
                 const playerItem = document.createElement('div');
                 playerItem.textContent = '#' + otherPlayer.id + ' - ' + otherPlayer.name + ': Money: $' + otherPlayer.money +
                     ' - Attack: ' + otherPlayer.attack + ' - Health: ' + otherPlayer.health + '/' + otherPlayer.strength +
-                    ' - Position: ' + otherPlayer.position.x.toFixed(2) + ' ' + otherPlayer.position.y.toFixed(2) + ' ' + otherPlayer.position.z.toFixed(2);
+                    ' - Position: ' + otherPlayer.position.x.toFixed(MOVEMENT_PRECISION) + ' ' + otherPlayer.position.y.toFixed(MOVEMENT_PRECISION) + ' ' + otherPlayer.position.z.toFixed(MOVEMENT_PRECISION);
                 playerListElement.appendChild(playerItem);
             } else {
                 const playerItem = document.createElement('div');
@@ -865,12 +876,14 @@
     });
 
     // Update
-    let previousTime = performance.now();
-    let updateTime = Date.now();
+    const clock = new THREE.Clock();
+    let playerMoveTime = Date.now();
+    let bankTime = Date.now();
+    let hospitalTime = Date.now();
+    let shopTime = Date.now();
 
     function update () {
-        const time = performance.now();
-        const delta = (time - previousTime) / 1000;
+        const delta = clock.getDelta();
 
         // Player movement
         velocity.z -= velocity.z * 10 * delta;
@@ -910,33 +923,45 @@
             canJump = true;
         }
 
-        // Send new player position
-        if (player != undefined && Date.now() - updateTime > 100) {
-            updateTime = Date.now();
+        // Send new player position when changed
+        if (
+            player != undefined &&
+            (
+                player.position.x != round(camera.position.x, MOVEMENT_PRECISION) ||
+                player.position.y != round(camera.position.y, MOVEMENT_PRECISION) ||
+                player.position.z != round(camera.position.z, MOVEMENT_PRECISION) ||
+
+                player.rotation.x != round(camera.rotation.x, MOVEMENT_PRECISION) ||
+                player.rotation.y != round(camera.rotation.y, MOVEMENT_PRECISION) ||
+                player.rotation.z != round(camera.rotation.z, MOVEMENT_PRECISION)
+            ) &&
+            Date.now() - playerMoveTime > PLAYER_MOVE_TIMEOUT
+        ) {
+            playerMoveTime = Date.now();
 
             updatePlayer(player.id, {
                 position: {
-                    x: camera.position.x,
-                    y: camera.position.y,
-                    z: camera.position.z,
+                    x: round(camera.position.x, MOVEMENT_PRECISION),
+                    y: round(camera.position.y, MOVEMENT_PRECISION),
+                    z: round(camera.position.z, MOVEMENT_PRECISION),
                 },
                 rotation: {
-                    x: camera.rotation.x,
-                    y: camera.rotation.y,
-                    z: camera.rotation.z
+                    x: round(camera.rotation.x, MOVEMENT_PRECISION),
+                    y: round(camera.rotation.y, MOVEMENT_PRECISION),
+                    z: round(camera.rotation.z, MOVEMENT_PRECISION)
                 }
             });
 
             sendMessage('player.move', {
                 position: {
-                    x: camera.position.x,
-                    y: camera.position.y,
-                    z: camera.position.z,
+                    x: round(camera.position.x, MOVEMENT_PRECISION),
+                    y: round(camera.position.y, MOVEMENT_PRECISION),
+                    z: round(camera.position.z, MOVEMENT_PRECISION),
                 },
                 rotation: {
-                    x: camera.rotation.x,
-                    y: camera.rotation.y,
-                    z: camera.rotation.z
+                    x: round(camera.rotation.x, MOVEMENT_PRECISION),
+                    y: round(camera.rotation.y, MOVEMENT_PRECISION),
+                    z: round(camera.rotation.z, MOVEMENT_PRECISION)
                 }
             });
         }
@@ -1002,6 +1027,7 @@
                                         money: player.money
                                     });
 
+                                    alert('You died!');
                                     window.location.reload();
                                 }
                             }
@@ -1027,21 +1053,28 @@
             const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
             bullet.playerId = player.id;
             bullet.createdAt = Date.now();
-            bullet.position.copy(camera.position);
-            bullet.rotation.copy(camera.rotation);
+
+            bullet.position.x = round(camera.position.x, MOVEMENT_PRECISION);
+            bullet.position.y = round(camera.position.y, MOVEMENT_PRECISION);
+            bullet.position.z = round(camera.position.z, MOVEMENT_PRECISION);
+
+            bullet.rotation.x = round(camera.rotation.x, MOVEMENT_PRECISION);
+            bullet.rotation.y = round(camera.rotation.y, MOVEMENT_PRECISION);
+            bullet.rotation.z = round(camera.rotation.z, MOVEMENT_PRECISION);
+
             bullets.add(bullet);
 
             sendMessage('player.shoot', {
                 createdAt: bullet.createdAt,
                 position: {
-                    x: camera.position.x,
-                    y: camera.position.y,
-                    z: camera.position.z,
+                    x: round(camera.position.x, MOVEMENT_PRECISION),
+                    y: round(camera.position.y, MOVEMENT_PRECISION),
+                    z: round(camera.position.z, MOVEMENT_PRECISION),
                 },
                 rotation: {
-                    x: camera.rotation.x,
-                    y: camera.rotation.y,
-                    z: camera.rotation.z
+                    x: round(camera.rotation.x, MOVEMENT_PRECISION),
+                    y: round(camera.rotation.y, MOVEMENT_PRECISION),
+                    z: round(camera.rotation.z, MOVEMENT_PRECISION)
                 }
             });
         }
@@ -1049,7 +1082,8 @@
         // Checks banks
         for (const bank of banks.children) {
             if (new THREE.Box3().setFromObject(bank).containsPoint(new THREE.Vector3(camera.position.x, bank.position.y, camera.position.z))) {
-                if (rand(1, 25) == 1) {
+                if (Date.now() - bankTime > BANK_TIMEOUT) {
+                    bankTime = Date.now();
                     coinSound.play();
 
                     const amount = rand(1, 2);
@@ -1069,23 +1103,22 @@
         // Checks hospitals
         for (const hospital of hospitals.children) {
             if (new THREE.Box3().setFromObject(hospital).containsPoint(new THREE.Vector3(camera.position.x, hospital.position.y, camera.position.z))) {
-                if (rand(1, 15) == 1 && player.money >= 2) {
-                    if (player.health + 1 <= player.strength) {
-                        healSound.play();
+                if (Date.now() - hospitalTime > HOSPITAL_TIMEOUT && player.money >= 2 && player.health + 1 <= player.strength) {
+                    hospitalTime = Date.now();
+                    healSound.play();
 
-                        updatePlayer(player.id, {
-                            money: player.money - 2,
-                            health: player.health + 1
-                        });
+                    updatePlayer(player.id, {
+                        money: player.money - 2,
+                        health: player.health + 1
+                    });
 
-                        sendMessage('player.health', {
-                            health: player.health
-                        });
+                    sendMessage('player.health', {
+                        health: player.health
+                    });
 
-                        sendMessage('player.money', {
-                            money: player.money
-                        });
-                    }
+                    sendMessage('player.money', {
+                        money: player.money
+                    });
                 }
                 break;
             }
@@ -1116,9 +1149,9 @@
                             z: door.destination.z,
                         },
                         rotation: {
-                            x: camera.rotation.x,
-                            y: camera.rotation.y,
-                            z: camera.rotation.z
+                            x: round(camera.rotation.x, MOVEMENT_PRECISION),
+                            y: round(camera.rotation.y, MOVEMENT_PRECISION),
+                            z: round(camera.rotation.z, MOVEMENT_PRECISION)
                         }
                     });
 
@@ -1129,7 +1162,8 @@
 
         // Checks strength shop item
         if (new THREE.Box3().setFromObject(strengthItem).containsPoint(new THREE.Vector3(camera.position.x, strengthItem.position.y, camera.position.z))) {
-            if (rand(1, 20) == 1 && player.money >= STRENGHT_COST) {
+            if (Date.now() - shopTime > SHOP_TIMEOUT && player.money >= STRENGHT_COST) {
+                shopTime = Date.now();
                 healSound.play();
 
                 updatePlayer(player.id, {
@@ -1154,7 +1188,8 @@
 
         // Checks attack shop item
         if (new THREE.Box3().setFromObject(attackItem).containsPoint(new THREE.Vector3(camera.position.x, attackItem.position.y, camera.position.z))) {
-            if (rand(1, 20) == 1 && player.money >= ATTACK_COST) {
+            if (Date.now() - shopTime > SHOP_TIMEOUT && player.money >= ATTACK_COST) {
+                shopTime = Date.now();
                 healSound.play();
 
                 updatePlayer(player.id, {
@@ -1174,7 +1209,8 @@
 
         // Checks attack jump item
         if (new THREE.Box3().setFromObject(jumpItem).containsPoint(new THREE.Vector3(camera.position.x, jumpItem.position.y, camera.position.z))) {
-            if (rand(1, 20) == 1 && player.money >= JUMP_COST) {
+            if (Date.now() - shopTime > SHOP_TIMEOUT && player.money >= JUMP_COST) {
+                shopTime = Date.now();
                 healSound.play();
 
                 updatePlayer(player.id, {
@@ -1191,7 +1227,8 @@
 
         // Checks attack speed item
         if (new THREE.Box3().setFromObject(speedItem).containsPoint(new THREE.Vector3(camera.position.x, speedItem.position.y, camera.position.z))) {
-            if (rand(1, 20) == 1 && player.money >= SPEED_COST) {
+            if (Date.now() - shopTime > SHOP_TIMEOUT && player.money >= SPEED_COST) {
+                shopTime = Date.now();
                 healSound.play();
 
                 updatePlayer(player.id, {
@@ -1210,8 +1247,6 @@
         for (const text of texts.children) {
             text.rotation.y += 0.75 * delta;
         }
-
-        previousTime = time;
     }
 
     // Loop
