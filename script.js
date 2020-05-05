@@ -27,7 +27,7 @@
     let playerSpeed = 75;
     let playerJumpHeight = 50;
 
-    const BULLET_SPEED = 65;
+    const BULLET_SPEED = 25;
     const BULLET_TIMEOUT = 2500;
 
     const SHOP_DISTANCE = MAP_SIZE * 3;
@@ -387,6 +387,10 @@
             camera.position.x = data.position.x;
             camera.position.y = data.position.y;
             camera.position.z = data.position.z;
+
+            camera.rotation.x = data.rotation.x;
+            camera.rotation.y = data.rotation.y;
+            camera.rotation.z = data.rotation.z;
 
             updateStatsLabel();
             updatePlayerList();
