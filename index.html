@@ -9,12 +9,45 @@
     <script src="/stats.min.js"></script>
 </head>
 <body>
-    <div id="menu-layer" class="layer menu-layer">
-        <div id="version-label" class="version-label"></div>
+    <div id="loading-layer" class="layer menu-layer">
+        <div class="version-label"></div>
+        <h1>PlaatWorld 3D</h1>
+        <p>Connecting with the server...</p>
+        <div class="footer-label">Made by <a href="https://bastiaan.ml/" target="_blank">Bastiaan van der Plaat</a></div>
+    </div>
+
+    <div id="menu-layer" class="layer menu-layer hidden">
+        <div class="version-label"></div>
         <h1>PlaatWorld 3D</h1>
         <p class="text-center"><i>Use WASD to move, space to jump, look around<br>with your mouse and click to shoot</i></p>
         <p>Name: <input type="text" id="name-input" value="Anonymous" maxlength="12"></p>
         <p><button id="play-button">Play</button></p>
+        <div class="footer-label">Made by <a href="https://bastiaan.ml/" target="_blank">Bastiaan van der Plaat</a></div>
+    </div>
+
+    <div id="version-layer" class="layer menu-layer hidden">
+        <div class="version-label"></div>
+        <h1>Wrong version error!</h1>
+        <p>The server uses a different version then this client!</p>
+        <p>Server version: <span id="server-version"></span></p>
+        <p>Client version: <span id="client-version"></span></p>
+        <p><button id="retry-button">Try to reconnect</button></p>
+        <div class="footer-label">Made by <a href="https://bastiaan.ml/" target="_blank">Bastiaan van der Plaat</a></div>
+    </div>
+
+    <div id="died-layer" class="layer menu-layer hidden">
+        <div class="version-label"></div>
+        <h1>You died!</h1>
+        <p><span id="player-name"></span> killed you!</p>
+        <p><button id="respawn-button">Respawn</button></p>
+        <div class="footer-label">Made by <a href="https://bastiaan.ml/" target="_blank">Bastiaan van der Plaat</a></div>
+    </div>
+
+    <div id="disconnect-layer" class="layer menu-layer hidden">
+        <div class="version-label"></div>
+        <h1>Connection error!</h1>
+        <p>The client can't connect with the server!</p>
+        <p><button id="reconnect-button">Try to reconnect</button></p>
         <div class="footer-label">Made by <a href="https://bastiaan.ml/" target="_blank">Bastiaan van der Plaat</a></div>
     </div>
 

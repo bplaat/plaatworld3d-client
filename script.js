@@ -70,10 +70,14 @@
     }
 
     // Elements
+    let connected = false;
+    let died = false;
     let lock = false;
 
+    const loadingLayerElement = document.getElementById('loading-layer');
+
     const menuLayerElement = document.getElementById('menu-layer');
-    const versionLabelElement = document.getElementById('version-label');
+    const versionLabelElements = document.querySelectorAll('.version-label');
     const nameInputElement = document.getElementById('name-input');
     const playButtonElement = document.getElementById('play-button');
 
@@ -84,8 +88,22 @@
     const chatListElement = document.getElementById('chat-list');
     const chatInputElement = document.getElementById('chat-input');
 
-    // Version label
-    versionLabelElement.textContent = 'v' + VERSION;
+    const versionLayerElement = document.getElementById('version-layer');
+    const serverVersionElement = document.getElementById('server-version');
+    const clientVersionElement = document.getElementById('client-version');
+    const retryButtonElement = document.getElementById('retry-button');
+
+    const diedLayerElement = document.getElementById('died-layer');
+    const playerNameElement = document.getElementById('player-name');
+    const respawnButtonElement = document.getElementById('respawn-button');
+
+    const disconnectLayerElement = document.getElementById('disconnect-layer');
+    const reconnectButtonElement = document.getElementById('reconnect-button');
+
+    // Version labels
+    for (const versionLabelElement of versionLabelElements) {
+        versionLabelElement.textContent = 'v' + VERSION;
+    }
 
     // Name input
     if (localStorage.getItem('name') == null) {
@@ -121,35 +139,21 @@
         }
     });
 
+    // Retry, respawn and reconnect button
+    retryButtonElement.addEventListener('click', function () {
+        window.location.reload();
+    });
+    respawnButtonElement.addEventListener('click', function () {
+        window.location.reload();
+    });
+    reconnectButtonElement.addEventListener('click', function () {
+        window.location.reload();
+    });
+
     // Stats label
     if (DEBUG) {
         statsLabelElement.classList.add('hidden');
     }
-
-    // Audio
-    class Sound {
-        constructor (audio_url) {
-            this.channels = [];
-            this.number = 10;
-            this.index = 0;
-            for (let i = 0; i < this.number; i++) {
-                this.channels.push(new Audio(audio_url));
-            }
-        }
-
-        play () {
-            this.channels[this.index++].play();
-            this.index = this.index < this.number ? this.index : 0;
-        }
-    }
-
-    const shootSound = new Sound('/sounds/shoot.wav');
-    const explosionSound = new Sound('/sounds/explosion.wav');
-    const hitSound = new Sound('/sounds/hit.wav');
-    const jumpSound = new Sound('/sounds/jump.wav');
-    const coinSound = new Sound('/sounds/coin.wav');
-    const healSound = new Sound('/sounds/heal.wav');
-    const doorSound = new Sound('/sounds/door.wav');
 
     // Scene
     const scene = new THREE.Scene();
@@ -160,6 +164,45 @@
     // Camera
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 400);
     camera.position.z = MAP_SIZE;
+
+    // Audio
+    const audioListener = new THREE.AudioListener();
+    camera.add(audioListener);
+
+    const shootSound = new THREE.Audio(audioListener);
+    new THREE.AudioLoader().load('/sounds/shoot.wav', function (buffer) {
+        shootSound.setBuffer(buffer);
+    });
+
+    const explosionSound = new THREE.Audio(audioListener);
+    new THREE.AudioLoader().load('/sounds/explosion.wav', function (buffer) {
+        explosionSound.setBuffer(buffer);
+    });
+
+    const hitSound = new THREE.Audio(audioListener);
+    new THREE.AudioLoader().load('/sounds/hit.wav', function (buffer) {
+        hitSound.setBuffer(buffer);
+    });
+
+    const jumpSound = new THREE.Audio(audioListener);
+    new THREE.AudioLoader().load('/sounds/jump.wav', function (buffer) {
+        jumpSound.setBuffer(buffer);
+    });
+
+    const coinSound = new THREE.Audio(audioListener);
+    new THREE.AudioLoader().load('/sounds/coin.wav', function (buffer) {
+        coinSound.setBuffer(buffer);
+    });
+
+    const healSound = new THREE.Audio(audioListener);
+    new THREE.AudioLoader().load('/sounds/heal.wav', function (buffer) {
+        healSound.setBuffer(buffer);
+    });
+
+    const doorSound = new THREE.Audio(audioListener);
+    new THREE.AudioLoader().load('/sounds/door.wav', function (buffer) {
+        doorSound.setBuffer(buffer);
+    });
 
     // Renderer
     const renderer = new THREE.WebGLRenderer();
@@ -383,11 +426,18 @@
                     name: localStorage.getItem('name')
                 });
             } else {
-                alert('The server uses a different version!\nServer version: ' + data.version + '\nClient version: ' + VERSION);
+                loadingLayerElement.classList.add('hidden');
+                versionLayerElement.classList.remove('hidden');
+                serverVersionElement.textContent = data.version;
+                clientVersionElement.textContent = VERSION;
             }
         }
 
         if (type == 'player.init') {
+            connected = true;
+            loadingLayerElement.classList.add('hidden');
+            menuLayerElement.classList.remove('hidden');
+
             player = data;
             players.push(data);
 
@@ -466,8 +516,6 @@
         }
 
         if (type == 'player.shoot') {
-            shootSound.play();
-
             const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
             bullet.playerId = data.playerId;
             bullet.createdAt = data.createdAt;
@@ -478,6 +526,8 @@
             bullet.rotation.y = data.rotation.y;
             bullet.rotation.z = data.rotation.z;
             bullets.add(bullet);
+
+            shootSound.play();
         }
 
         if (type == 'player.close') {
@@ -511,8 +561,15 @@
     };
 
     ws.onclose = function () {
-        alert('The connection with the server is lost!');
-        window.location.reload();
+        if (!died) {
+            if (lock) {
+                document.exitPointerLock();
+            }
+            loadingLayerElement.classList.add('hidden');
+            menuLayerElement.classList.add('hidden');
+            controlsLayerElement.classList.add('hidden');
+            disconnectLayerElement.classList.remove('hidden');
+        }
     };
 
     // Bullets
@@ -925,7 +982,6 @@
 
         // Send new player position when changed
         if (
-            player != undefined &&
             (
                 player.position.x != round(camera.position.x, MOVEMENT_PRECISION) ||
                 player.position.y != round(camera.position.y, MOVEMENT_PRECISION) ||
@@ -1027,8 +1083,17 @@
                                         money: player.money
                                     });
 
-                                    alert('You died!');
-                                    window.location.reload();
+                                    if (lock) {
+                                        document.exitPointerLock();
+                                    }
+
+                                    died = true;
+                                    ws.close();
+
+                                    menuLayerElement.classList.add('hidden')
+                                    controlsLayerElement.classList.add('hidden');
+                                    diedLayerElement.classList.remove('hidden');
+                                    playerNameElement.textContent = getPlayer(bullet.playerId).name;
                                 }
                             }
 
@@ -1040,15 +1105,13 @@
             }
 
             if (kill) {
-                bullets.remove(bullet);
                 explosionSound.play();
+                bullets.remove(bullet);
             }
         }
 
         if (shoot) {
             shoot = false;
-
-            shootSound.play();
 
             const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
             bullet.playerId = player.id;
@@ -1063,6 +1126,8 @@
             bullet.rotation.z = round(camera.rotation.z, MOVEMENT_PRECISION);
 
             bullets.add(bullet);
+
+            shootSound.play();
 
             sendMessage('player.shoot', {
                 createdAt: bullet.createdAt,
@@ -1125,38 +1190,36 @@
         }
 
         // Checks doors
-        if (player != undefined) {
-            for (const door of doors.children) {
-                if (new THREE.Box3().setFromObject(player.group).intersectsBox(new THREE.Box3().setFromObject(door))) {
-                    if (DEBUG_CONSOLE) console.log('Door Hit');
+        for (const door of doors.children) {
+            if (new THREE.Box3().setFromObject(player.group).intersectsBox(new THREE.Box3().setFromObject(door))) {
+                if (DEBUG_CONSOLE) console.log('Door Hit');
 
-                    doorSound.play();
+                doorSound.play();
 
-                    camera.position.copy(door.destination);
+                camera.position.copy(door.destination);
 
-                    updatePlayer(player.id, {
-                        position: {
-                            x: door.destination.x,
-                            y: door.destination.y,
-                            z: door.destination.z
-                        }
-                    });
+                updatePlayer(player.id, {
+                    position: {
+                        x: door.destination.x,
+                        y: door.destination.y,
+                        z: door.destination.z
+                    }
+                });
 
-                    sendMessage('player.move', {
-                        position: {
-                            x: door.destination.x,
-                            y: door.destination.y,
-                            z: door.destination.z,
-                        },
-                        rotation: {
-                            x: round(camera.rotation.x, MOVEMENT_PRECISION),
-                            y: round(camera.rotation.y, MOVEMENT_PRECISION),
-                            z: round(camera.rotation.z, MOVEMENT_PRECISION)
-                        }
-                    });
+                sendMessage('player.move', {
+                    position: {
+                        x: door.destination.x,
+                        y: door.destination.y,
+                        z: door.destination.z,
+                    },
+                    rotation: {
+                        x: round(camera.rotation.x, MOVEMENT_PRECISION),
+                        y: round(camera.rotation.y, MOVEMENT_PRECISION),
+                        z: round(camera.rotation.z, MOVEMENT_PRECISION)
+                    }
+                });
 
-                    break;
-                }
+                break;
             }
         }
 
@@ -1252,12 +1315,11 @@
     // Loop
     function loop () {
         stats.begin();
-        update();
+        if (connected) update();
         TWEEN.update();
         renderer.render(scene, camera);
         stats.end();
         window.requestAnimationFrame(loop);
     }
-
     loop();
 })();
