@@ -180,6 +180,16 @@
             this.channels[this.index++].play();
             this.index = this.index < this.number ? this.index : 0;
         }
+
+        playAtPosition (position, radius) {
+            var distance = camera.position.distanceTo(position);
+            if (distance <= radius) {
+                this.channels[this.index].volume = 1 - distance / radius;
+            } else {
+                this.channels[this.index].volume = 0;
+            }
+            this.play();
+        }
     }
 
     const shootSound = new Sound('/sounds/shoot.wav');
@@ -513,7 +523,7 @@
             bullet.rotation.z = data.rotation.z;
             bullets.add(bullet);
 
-            shootSound.play();
+            shootSound.playAtPosition(bullet.position, 100);
         }
 
         if (type == 'player.close') {
@@ -1091,7 +1101,7 @@
             }
 
             if (kill) {
-                explosionSound.play();
+                explosionSound.playAtPosition(bullet.position, 100);
                 bullets.remove(bullet);
             }
         }
