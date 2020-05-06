@@ -184,6 +184,7 @@
         playAtPosition (position, radius) {
             var distance = camera.position.distanceTo(position);
             if (distance <= radius) {
+                this.channels[this.index].volume = 1 - distance / radius;
                 this.play();
             }
         }
