@@ -166,43 +166,29 @@
     camera.position.z = MAP_SIZE;
 
     // Audio
-    const audioListener = new THREE.AudioListener();
-    camera.add(audioListener);
+    class Sound {
+        constructor (audio_url) {
+            this.channels = [];
+            this.number = 10;
+            this.index = 0;
+            for (let i = 0; i < this.number; i++) {
+                this.channels.push(new Audio(audio_url));
+            }
+        }
 
-    const shootSound = new THREE.Audio(audioListener);
-    new THREE.AudioLoader().load('/sounds/shoot.wav', function (buffer) {
-        shootSound.setBuffer(buffer);
-    });
+        play () {
+            this.channels[this.index++].play();
+            this.index = this.index < this.number ? this.index : 0;
+        }
+    }
 
-    const explosionSound = new THREE.Audio(audioListener);
-    new THREE.AudioLoader().load('/sounds/explosion.wav', function (buffer) {
-        explosionSound.setBuffer(buffer);
-    });
-
-    const hitSound = new THREE.Audio(audioListener);
-    new THREE.AudioLoader().load('/sounds/hit.wav', function (buffer) {
-        hitSound.setBuffer(buffer);
-    });
-
-    const jumpSound = new THREE.Audio(audioListener);
-    new THREE.AudioLoader().load('/sounds/jump.wav', function (buffer) {
-        jumpSound.setBuffer(buffer);
-    });
-
-    const coinSound = new THREE.Audio(audioListener);
-    new THREE.AudioLoader().load('/sounds/coin.wav', function (buffer) {
-        coinSound.setBuffer(buffer);
-    });
-
-    const healSound = new THREE.Audio(audioListener);
-    new THREE.AudioLoader().load('/sounds/heal.wav', function (buffer) {
-        healSound.setBuffer(buffer);
-    });
-
-    const doorSound = new THREE.Audio(audioListener);
-    new THREE.AudioLoader().load('/sounds/door.wav', function (buffer) {
-        doorSound.setBuffer(buffer);
-    });
+    const shootSound = new Sound('/sounds/shoot.wav');
+    const explosionSound = new Sound('/sounds/explosion.wav');
+    const hitSound = new Sound('/sounds/hit.wav');
+    const jumpSound = new Sound('/sounds/jump.wav');
+    const coinSound = new Sound('/sounds/coin.wav');
+    const healSound = new Sound('/sounds/heal.wav');
+    const doorSound = new Sound('/sounds/door.wav');
 
     // Renderer
     const renderer = new THREE.WebGLRenderer();
