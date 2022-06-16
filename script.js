@@ -1,7 +1,7 @@
 (function () {
     // Constants
     const VERSION = '0.4.1';
-    const DEBUG = window.location.hostname != 'plaatworld3d.netlify.app';
+    const DEBUG = !(window.location.hostname == 'plaatworld3d.ml' && window.location.hostname == 'plaatworld3d.netlify.app');
     const DEBUG_CONSOLE = DEBUG && false;
 
     const CHAT_SERVER_PLAYER_ID = 0;
@@ -243,7 +243,7 @@
     const players = [];
 
     let ws;
-    if (window.location.hostname == 'plaatworld3d.netlify.app') {
+    if (window.location.hostname == 'plaatworld3d.ml' || window.location.hostname == 'plaatworld3d.netlify.app') {
         ws = new WebSocket('wss://plaatworld3d.herokuapp.com/');
     } else {
         ws = new WebSocket('ws://localhost:8081/');
