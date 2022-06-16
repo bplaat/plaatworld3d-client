@@ -1,0 +1,2 @@
+# Redirect default Netlify subdomain to primary domain
+https://plaatworld3d.netlify.app/* https://plaatworld3d.ml/:splat 301!
