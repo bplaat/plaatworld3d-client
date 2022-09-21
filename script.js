@@ -244,9 +244,9 @@
 
     let ws;
     if (window.location.hostname == 'plaatworld3d.ml' || window.location.hostname == 'plaatworld3d.netlify.app') {
-        ws = new WebSocket('wss://plaatworld3d.herokuapp.com/');
+        ws = new WebSocket('wss://plaatworld3d.fly.dev/');
     } else {
-        ws = new WebSocket('ws://localhost:8081/');
+        ws = new WebSocket('ws://localhost:8080/');
     }
 
     function sendMessage (type, data) {
