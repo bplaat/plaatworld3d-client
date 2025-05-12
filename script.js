@@ -53,7 +53,7 @@
     const MOVEMENT_PRECISION = 3;
 
     // Round function
-    function round (number, precision) {
+    function round(number, precision) {
         return Number(number.toFixed(precision));
     }
 
@@ -65,7 +65,7 @@
         return x - Math.floor(x);
     }
 
-    function rand (min, max) {
+    function rand(min, max) {
         return Math.floor(random() * (max - min + 1)) + min;
     }
 
@@ -119,7 +119,7 @@
     });
 
     // Play button
-    function requestLock () {
+    function requestLock() {
         renderer.domElement.requestPointerLock();
     }
 
@@ -167,7 +167,7 @@
 
     // Audio
     class Sound {
-        constructor (audio_url) {
+        constructor(audio_url) {
             this.channels = [];
             this.number = 10;
             this.index = 0;
@@ -176,12 +176,12 @@
             }
         }
 
-        play () {
+        play() {
             this.channels[this.index++].play();
             this.index = this.index < this.number ? this.index : 0;
         }
 
-        playAtPosition (position, radius) {
+        playAtPosition(position, radius) {
             var distance = camera.position.distanceTo(position);
             if (distance <= radius) {
                 this.channels[this.index].volume = 1 - distance / radius;
@@ -244,17 +244,17 @@
 
     let ws;
     if (window.location.hostname == 'plaatworld3d.ml' || window.location.hostname == 'plaatworld3d.netlify.app') {
-        ws = new WebSocket('wss://plaatworld3d.fly.dev/');
+        ws = new WebSocket('wss://plaatworld3d.bplaat.nl/');
     } else {
         ws = new WebSocket('ws://localhost:8080/');
     }
 
-    function sendMessage (type, data) {
+    function sendMessage(type, data) {
         if (DEBUG_CONSOLE) console.log('SENT: ', JSON.stringify({ type: type, data: data }));
         ws.send(JSON.stringify({ type: type, data: data }));
     }
 
-    function addChat (name, message) {
+    function addChat(name, message) {
         const chatItem = document.createElement('div');
         chatListElement.appendChild(chatItem);
 
@@ -275,7 +275,7 @@
         }, CHAT_TIMEOUT);
     }
 
-    function getPlayer (player_id) {
+    function getPlayer(player_id) {
         for (let i = 0; i < players.length; i++) {
             if (players[i].id == player_id) {
                 return players[i];
@@ -283,7 +283,7 @@
         }
     }
 
-    function updatePlayer (player_id, props) {
+    function updatePlayer(player_id, props) {
         for (let i = 0; i < players.length; i++) {
             if (players[i].id == player_id) {
 
@@ -337,11 +337,11 @@
         updatePlayerList();
     }
 
-    function updateStatsLabel () {
+    function updateStatsLabel() {
         statsLabelElement.textContent = 'Money: $' + player.money + ' - Attack: ' + player.attack + ' - Health: ' + player.health + '/' + player.strength;
     }
 
-    function updatePlayerList () {
+    function updatePlayerList() {
         const sortedPlayers = players.slice();
         sortedPlayers.sort(function (a, b) {
             return b.money - a.money;
@@ -373,13 +373,13 @@
         context.fillRect(0, 0, Math.round(player.health / player.strength * canvas.width), canvas.height);
 
         context.fillStyle = '#fff';
-        context.font = 'bold ' +  canvas.width / 100 * 15 + 'px monospace';
+        context.font = 'bold ' + canvas.width / 100 * 15 + 'px monospace';
         context.textAlign = 'center';
         context.textBaseline = 'middle';
         context.fillText(player.name, canvas.width / 2, canvas.height / 2);
     }
 
-    function createPlayerGroup (player, visible) {
+    function createPlayerGroup(player, visible) {
         player.group = new THREE.Group();
         player.group.position.x = player.position.x;
         player.group.position.y = player.position.y;
@@ -725,7 +725,7 @@
     scene.add(banks);
 
     for (let i = 0; i < MAP_SIZE * MAP_SIZE / 10000; i++) {
-        const bank = new THREE.Mesh(bankGeometry,  bankMaterial);
+        const bank = new THREE.Mesh(bankGeometry, bankMaterial);
         bank.rotation.x = -Math.PI / 2;
         bank.position.x = rand((-MAP_SIZE / 2) / BANK_SIZE, (MAP_SIZE / 2) / BANK_SIZE) * BANK_SIZE;
         bank.position.z = rand((-MAP_SIZE / 2) / BANK_SIZE, (MAP_SIZE / 2) / BANK_SIZE) * BANK_SIZE;
@@ -745,7 +745,7 @@
     scene.add(hospitals);
 
     for (let i = 0; i < MAP_SIZE * MAP_SIZE / 20000; i++) {
-        const hospital = new THREE.Mesh(hospitalGeometry,  hospitalMaterial);
+        const hospital = new THREE.Mesh(hospitalGeometry, hospitalMaterial);
         hospital.rotation.x = -Math.PI / 2;
         hospital.position.x = rand((-MAP_SIZE / 2) / HOSPITAL_SIZE, (MAP_SIZE / 2) / HOSPITAL_SIZE) * HOSPITAL_SIZE;
         hospital.position.z = rand((-MAP_SIZE / 2) / HOSPITAL_SIZE, (MAP_SIZE / 2) / HOSPITAL_SIZE) * HOSPITAL_SIZE;
@@ -792,7 +792,7 @@
     // Shop strength
     const strengthItemTexture = new THREE.TextureLoader().load('/images/strength.jpg');
     const strengthItemMaterial = new THREE.MeshBasicMaterial({ map: strengthItemTexture });
-    const strengthItem = new THREE.Mesh(shopItemGeometry,  strengthItemMaterial);
+    const strengthItem = new THREE.Mesh(shopItemGeometry, strengthItemMaterial);
     strengthItem.rotation.x = -Math.PI / 2;
     strengthItem.position.x = -SHOP_ITEM_SIZE * 2.5;
     strengthItem.position.y = 0.1;
@@ -802,7 +802,7 @@
     // Shop attack
     const attackItemTexture = new THREE.TextureLoader().load('/images/attack.jpg');
     const attackItemMaterial = new THREE.MeshBasicMaterial({ map: attackItemTexture });
-    const attackItem = new THREE.Mesh(shopItemGeometry,  attackItemMaterial);
+    const attackItem = new THREE.Mesh(shopItemGeometry, attackItemMaterial);
     attackItem.rotation.x = -Math.PI / 2;
     attackItem.position.x = SHOP_ITEM_SIZE * 2.5;
     attackItem.position.y = 0.1;
@@ -812,7 +812,7 @@
     // Shop jump
     const jumpItemTexture = new THREE.TextureLoader().load('/images/jump.jpg');
     const jumpItemMaterial = new THREE.MeshBasicMaterial({ map: jumpItemTexture });
-    const jumpItem = new THREE.Mesh(shopItemGeometry,  jumpItemMaterial);
+    const jumpItem = new THREE.Mesh(shopItemGeometry, jumpItemMaterial);
     jumpItem.rotation.x = -Math.PI / 2;
     jumpItem.position.x = -SHOP_ITEM_SIZE * 2.5;
     jumpItem.position.y = 0.1;
@@ -822,7 +822,7 @@
     // Shop speed
     const speedItemTexture = new THREE.TextureLoader().load('/images/speed.jpg');
     const speedItemMaterial = new THREE.MeshBasicMaterial({ map: speedItemTexture });
-    const speedItem = new THREE.Mesh(shopItemGeometry,  speedItemMaterial);
+    const speedItem = new THREE.Mesh(shopItemGeometry, speedItemMaterial);
     speedItem.rotation.x = -Math.PI / 2;
     speedItem.position.x = SHOP_ITEM_SIZE * 2.5;
     speedItem.position.y = 0.1;
@@ -844,7 +844,7 @@
         logoTextGeometry.center();
         const logoText = new THREE.Mesh(logoTextGeometry, textMaterial);
         logoText.position.y = 1.5;
-        logoText.rotation.y = random() *  Math.PI;
+        logoText.rotation.y = random() * Math.PI;
         texts.add(logoText);
 
         // Map shop door text
@@ -857,7 +857,7 @@
         const shopText = new THREE.Mesh(shopTextGeometry, textMaterial);
         shopText.position.y = DOOR_SIZE + 1;
         shopText.position.z = -25;
-        shopText.rotation.y = random() *  Math.PI;
+        shopText.rotation.y = random() * Math.PI;
         texts.add(shopText);
 
         // Shop back door text
@@ -870,7 +870,7 @@
         const backText = new THREE.Mesh(backTextGeometry, textMaterial);
         backText.position.y = DOOR_SIZE + 1;
         backText.position.z = SHOP_DISTANCE - SHOP_SIZE + 10;
-        backText.rotation.y = random() *  Math.PI;
+        backText.rotation.y = random() * Math.PI;
         texts.add(backText);
 
         // Shop strength text
@@ -933,7 +933,7 @@
     let hospitalTime = Date.now();
     let shopTime = Date.now();
 
-    function update () {
+    function update() {
         const delta = clock.getDelta();
 
         // Player movement
@@ -1307,7 +1307,7 @@
     }
 
     // Loop
-    function loop () {
+    function loop() {
         stats.begin();
         if (connected) update();
         TWEEN.update();
